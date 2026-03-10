@@ -27,7 +27,7 @@ cache: true
 
 # Custom interface configuration
 interface:
-  customWelcome: 'Welcome to LibreChat! Enjoy your experience.'
+  # customWelcome: 'Welcome to LibreChat! Enjoy your experience.'
   # Enable/disable file search as a chatarea selection (default: true)
   # Note: This setting does not disable the Agents File Search Capability.
   # To disable the Agents Capability, see the Agents Endpoint configuration instead.
@@ -336,8 +336,9 @@ endpoints:
   #     #     deploymentName: claude-3-5-haiku@20241022  # Override for this model
 
   custom:
-    - name: "Ollama-Local"
-      apiKey: "ollama"
+    - name: "TAIA-dev"
+      apiKey: "taia"
+      iconURL: "/assets/logo.png"
       baseURL: "http://ollama:11434/v1" 
       models:
         default:
@@ -346,9 +347,10 @@ endpoints:
       titleConvo: true
       titleModel: "qwen3.5:4b"
 
-    - name: "vLLM-Production"
+    - name: "TAIA-Production"
       baseURL: "http://vllm:8000/v1"
       apiKey: "sk-enterprise-secure-key"
+      iconURL: "/assets/logo.png"
       models:
         default: [ "meta-llama/Llama-3.3-70B-Instruct" ]
         fetch: false
