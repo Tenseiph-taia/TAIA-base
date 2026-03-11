@@ -1,5 +1,5 @@
 const { logger } = require('@librechat/data-schemas');
-const { SystemRoles } = require('librechat-data-provider');
+const { SystemRoles, ResourceType } = require('librechat-data-provider');
 const { checkPermission } = require('~/server/services/PermissionService');
 
 /**
@@ -132,6 +132,34 @@ const canAccessResource = (options) => {
         };
 
         return next();
+      }
+      
+      if (resourceType === ResourceType.AGENT && resourceInfo) {
+        const agentCategory = String(resourceInfo.category ?? '').toUpperCase();
+        const userDepts = Array.isArray(req.user.departments)
+          ? req.user.departments.map(d => String(d).toUpperCase())
+          : [];
+
+        if (!userDepts.includes('GENERAL')) {
+          userDepts.push('GENERAL');
+        }
+
+        if (agentCategory && userDepts.includes(agentCategory)) {
+          logger.debug(
+            `[canAccessResource] User ${userId} granted access to ${resourceType} ${rawResourceId} via department membership (${agentCategory})`,
+          );
+
+          req.resourceAccess = {
+            resourceType,
+            resourceId,
+            customResourceId: rawResourceId,
+            permission: requiredPermission,
+            userId,
+            ...(resourceInfo && { resourceInfo }),
+          };
+
+          return next();
+        }
       }
 
       logger.warn(

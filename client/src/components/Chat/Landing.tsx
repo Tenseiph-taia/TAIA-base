@@ -146,14 +146,14 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
         <img 
           src="/assets/animated_logo.gif" 
           alt="TAIA Logo" 
-          className="mb-6 h-40 w-auto object-contain opacity-90 transition-opacity hover:opacity-100" 
+          className="h-40 w-auto object-contain opacity-90 transition-opacity hover:opacity-100" 
         />
 
         <div
           className={`flex ${textHasMultipleLines ? 'flex-col' : 'flex-col md:flex-row'} items-center justify-center gap-2`}
         >
-          <div className={`relative size-10 justify-center ${textHasMultipleLines ? 'mb-2' : ''}`}>
-            {/* <ConvoIcon
+          {/* <div className={`relative size-10 justify-center ${textHasMultipleLines ? 'mb-2' : ''}`}>
+            <ConvoIcon
               agentsMap={agentsMap}
               assistantMap={assistantMap}
               conversation={conversation}
@@ -162,7 +162,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
               context="landing"
               className="h-2/3 w-2/3 text-black dark:text-white"
               size={41}
-            /> */}
+            />
             {startupConfig?.showBirthdayIcon && (
               <TooltipAnchor
                 className="absolute bottom-[27px] right-2"
@@ -172,7 +172,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
                 <BirthdayIcon />
               </TooltipAnchor>
             )}
-          </div>
+          </div> */}
           {((isAgent || isAssistant) && name) || name ? (
             <div className="flex flex-col items-center gap-0 p-2">
               <SplitText

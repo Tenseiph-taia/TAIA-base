@@ -42,6 +42,30 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
     });
 
     if (!hasViewPermission) {
+      if (userDepartments && Array.isArray(userDepartments)) {
+        const agentCategory = String(agent.category ?? '').toUpperCase();
+        const userDepts = userDepartments.map(d => String(d).toUpperCase());
+        if (!userDepts.includes('GENERAL')) {
+          userDepts.push('GENERAL');
+        }
+        if (agentCategory && userDepts.includes(agentCategory)) {
+          const attachedFileIds = new Set();
+          if (agent.tool_resources) {
+            for (const [_resourceType, resource] of Object.entries(agent.tool_resources)) {
+              if (resource?.file_ids && Array.isArray(resource.file_ids)) {
+                resource.file_ids.forEach((fileId) => attachedFileIds.add(fileId));
+              }
+            }
+          }
+          fileIds.forEach((fileId) => {
+            if (attachedFileIds.has(fileId)) {
+              accessMap.set(fileId, true);
+            }
+          });
+          return accessMap;
+        }
+      }
+
       return accessMap;
     }
 
@@ -94,7 +118,7 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
  * @param {string} params.agentId - Agent ID that might grant access to files
  * @returns {Promise<Array<MongoFile>>} Filtered array of accessible files
  */
-const filterFilesByAgentAccess = async ({ files, userId, role, agentId }) => {
+const filterFilesByAgentAccess = async ({ files, userId, role, agentId, userDepartments }) => {
   if (!userId || !agentId || !files || files.length === 0) {
     return files;
   }
@@ -117,7 +141,9 @@ const filterFilesByAgentAccess = async ({ files, userId, role, agentId }) => {
 
   // Batch check access for all non-owned files
   const fileIds = filesToCheck.map((f) => f.file_id);
-  const accessMap = await hasAccessToFilesViaAgent({ userId, role, fileIds, agentId });
+  const accessMap = await hasAccessToFilesViaAgent({ 
+    userId, role, fileIds, agentId, userDepartments 
+  });
 
   // Filter files based on access
   const accessibleFiles = filesToCheck.filter((file) => accessMap.get(file.file_id));
