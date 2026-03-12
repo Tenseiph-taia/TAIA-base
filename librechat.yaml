@@ -34,7 +34,7 @@ interface:
   fileSearch: true
   # Privacy policy settings
   privacyPolicy:
-    externalUrl: ''
+    externalUrl: 'https://www.tenseiph.com/privacy/'
     openNewTab: false
 
   # Terms of service
