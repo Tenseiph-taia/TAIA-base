@@ -311,6 +311,7 @@ const loadTools = async ({
 
         return createFileSearchTool({
           userId: user,
+          authorId: agent?.author?.toString() ?? user,
           files,
           entity_id: agent?.id,
           fileCitations,
