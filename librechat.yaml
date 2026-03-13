@@ -346,6 +346,9 @@ endpoints:
         fetch: true
       titleConvo: true
       titleModel: "nemotron-3-super:cloud"
+      modelDisplayLabel: "TAIA Dev"
+      num_ctx: 8192
+      maxContent: 8192
 
     - name: "TAIA-Production"
       baseURL: "http://vllm:8000/v1"
