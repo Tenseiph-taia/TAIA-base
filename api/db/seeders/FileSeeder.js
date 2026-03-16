@@ -10,7 +10,7 @@ const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:8000';
 const AGENT_ID = 'agent_taia_default';
 
 // ─── AUTO-DISCOVER ALL FILES IN SEEDS FOLDER ──────────────────────────────────
-const SEEDS_DIR = path.resolve(__dirname, '../../../docs/seeds');
+const SEEDS_DIR = '/app/docs/seeds';
 const FILES_TO_SEED = fs.readdirSync(SEEDS_DIR)
   .filter(f => !f.startsWith('.')) // skip hidden files
   .map(f => path.join(SEEDS_DIR, f));
