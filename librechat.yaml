@@ -337,15 +337,18 @@ endpoints:
 
   custom:
     - name: "TAIA-dev"
-      apiKey: "taia"
+      apiKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE2NS5vaA63LU/rBDJsoE4QWwqhH/flOzrsMoDNPvJnh"
       iconURL: "/assets/logo.png"
       baseURL: "http://ollama:11434/v1" 
       models:
         default:
-          - "qwen3.5:4b"
+          - "nemotron-3-super:cloud"
         fetch: true
       titleConvo: true
-      titleModel: "qwen3.5:4b"
+      titleModel: "nemotron-3-super:cloud"
+      modelDisplayLabel: "TAIA Dev"
+      num_ctx: 8192
+      maxContent: 8192
 
     - name: "TAIA-Production"
       baseURL: "http://vllm:8000/v1"
