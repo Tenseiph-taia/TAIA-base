@@ -343,8 +343,6 @@ endpoints:
       models:
         default:
           - "nemotron-3-super:cloud"
-          - "cogito:3b"
-          - "qwen2.5:3b"
         fetch: true
       titleConvo: true
       titleModel: "nemotron-3-super:cloud"
