@@ -73,6 +73,16 @@ const AttachFileMenu = ({
   );
   const [toolResource, setToolResource] = useState<EToolResources | undefined>();
   const { handleFileChange } = useFileHandling();
+  // Agent file search handling — passes agent_id so file attaches to agent permanently
+  const { handleFileChange: handleAgentFileChange } = useFileHandling(
+    agentId
+      ? {
+          additionalMetadata: {
+            agent_id: agentId,
+          },
+        }
+      : undefined,
+  );
   const { handleSharePointFiles, isProcessing, downloadProgress } = useSharePointFileHandling({
     toolResource,
   });
@@ -275,7 +285,11 @@ const AttachFileMenu = ({
       <FileUpload
         ref={inputRef}
         handleFileChange={(e) => {
-          handleFileChange(e, toolResource);
+          if (toolResource === EToolResources.file_search && agentId) {
+            handleAgentFileChange(e, EToolResources.file_search);
+          } else {
+            handleFileChange(e, toolResource);
+          }
         }}
       >
         <DropdownPopup

@@ -32,6 +32,7 @@ const {
   updateAgent,
   deleteAgent,
   getAgent,
+  getAgents,
 } = require('~/models/Agent');
 const {
   findPubliclyAccessibleResources,
@@ -510,6 +511,36 @@ const getListAgentsHandler = async (req, res) => {
       const regex = new RegExp(safeSearch, 'i');
       filter.$or = [{ name: regex }, { description: regex }];
     }
+    
+    if (req.user.role !== 'ADMIN') {
+      const userDepts = Array.isArray(req.user.departments)
+        ? req.user.departments.map(d => String(d))
+        : [];
+
+      if (!userDepts.includes('GENERAL')) {
+        userDepts.push('GENERAL');
+      }
+
+      const securityCondition = {
+        $or: [
+          { category: { $in: userDepts } },
+          { author: userId }
+        ]
+      };
+
+      if (filter.category) {
+        if (!userDepts.includes(String(filter.category))) {
+          filter.author = userId;
+        }
+      } else {
+        if (filter.$or) {
+          filter.$and = [{ $or: filter.$or }, securityCondition];
+          delete filter.$or;
+        } else {
+          Object.assign(filter, securityCondition);
+        }
+      }
+    }
 
     // Get agent IDs the user has VIEW access to via ACL
     const accessibleIds = await findAccessibleResources({
@@ -518,6 +549,28 @@ const getListAgentsHandler = async (req, res) => {
       resourceType: ResourceType.AGENT,
       requiredPermissions: requiredPermission,
     });
+
+    if (req.user.role !== 'ADMIN') {
+      const userDepts = Array.isArray(req.user.departments)
+        ? req.user.departments.map(d => String(d).toUpperCase())
+        : [];
+      if (!userDepts.includes('GENERAL')) {
+        userDepts.push('GENERAL');
+      }
+      if (userDepts.length > 0) {
+        const deptAgents = await getAgents(
+          { category: { $in: userDepts } },
+        );
+        const deptIds = deptAgents.map(a => a._id);
+        // Merge without duplicates
+        const existingIdStrings = new Set(accessibleIds.map(id => id.toString()));
+        for (const id of deptIds) {
+          if (!existingIdStrings.has(id.toString())) {
+            accessibleIds.push(id);
+          }
+        }
+      }
+    }
 
     const publiclyAccessibleIds = await findPubliclyAccessibleResources({
       resourceType: ResourceType.AGENT,
@@ -537,7 +590,7 @@ const getListAgentsHandler = async (req, res) => {
       try {
         const fullList = await getListAgentsByAccess({
           accessibleIds,
-          otherParams: {},
+          otherParams: req.user.role !== 'ADMIN' ? filter : {},
           limit: MAX_AVATAR_REFRESH_AGENTS,
           after: null,
         });
@@ -594,7 +647,7 @@ const getListAgentsHandler = async (req, res) => {
 
     return res.json(data);
   } catch (error) {
-    logger.error('[/Agents] Error listing Agents: %o', error);
+    logger.error(`[/Agents] Error listing Agents: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };

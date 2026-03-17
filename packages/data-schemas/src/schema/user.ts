@@ -125,6 +125,15 @@ const userSchema = new Schema<IUser>(
       type: [BackupCodeSchema],
       select: false,
     },
+    pendingTotpSecret: {
+      type: String,
+      select: false,
+    },
+    pendingBackupCodes: {
+      type: [BackupCodeSchema],
+      select: false,
+      default: undefined,
+    },
     refreshToken: {
       type: [SessionSchema],
     },
