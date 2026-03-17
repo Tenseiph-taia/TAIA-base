@@ -27,10 +27,10 @@ const {
   resizeImageBuffer,
 } = require('~/server/services/Files/images');
 const { addResourceFileId, deleteResourceFileId } = require('~/server/controllers/assistants/v2');
-const { addAgentResourceFile, removeAgentResourceFiles } = require('~/models/Agent');
+const { addAgentResourceFile, removeAgentResourceFiles, getAgent } = require('~/models/Agent');
 const { getOpenAIClient } = require('~/server/controllers/assistants/helpers');
 const { loadAuthValues } = require('~/server/services/Tools/credentials');
-const { createFile, updateFileUsage, deleteFiles } = require('~/models');
+const { createFile, updateFileUsage, deleteFiles, getFiles } = require('~/models');
 const { getFileStrategy } = require('~/server/utils/getFileStrategy');
 const { checkCapability } = require('~/server/services/Config');
 const { LB_QueueAsyncCall } = require('~/server/utils/queue');
@@ -510,6 +510,32 @@ const processAgentFileUpload = async ({ req, res, metadata }) => {
     const isFileSearchEnabled = await checkCapability(req, AgentCapabilities.file_search);
     if (!isFileSearchEnabled) {
       throw new Error('File search is not enabled for Agents');
+    }
+
+    const existingAgent = await getAgent({ id: agent_id });
+    const existingFileIds = existingAgent?.tool_resources?.file_search?.file_ids ?? [];
+    if (existingFileIds.length > 0) {
+      const existingFiles = await getFiles({
+        file_id: { $in: existingFileIds },
+        filename: sanitizeFilename(file.originalname),
+      });
+      
+      const allExistingFiles = await getFiles({ file_id: { $in: existingFileIds } });
+      const isDuplicate = allExistingFiles.some(
+        f => sanitizeFilename(f.filename) === sanitizeFilename(file.originalname)
+      );
+
+      if (isDuplicate) {
+        const existing = allExistingFiles.find(
+          f => sanitizeFilename(f.filename) === sanitizeFilename(file.originalname)
+        );
+        return res.status(200).json({
+          message: 'File already exists on this agent',
+          ...existing,
+          temp_file_id: temp_file_id ?? file_id,
+          isDuplicate: true,
+        });
+      }
     }
     // Note: File search processing continues to dual storage logic below
   } else if (tool_resource === EToolResources.context) {
