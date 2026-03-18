@@ -21,7 +21,7 @@ function getTextSizeClass(text: string | undefined | null) {
   }
 
   if (text.length < 70) {
-    return 'text-xl sm:text-2xl';
+    return 'text-2xl sm:text-3xl';
   }
 
   return 'text-lg sm:text-md';
@@ -67,10 +67,6 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
   const getGreeting = useCallback(() => {
     if (typeof startupConfig?.interface?.customWelcome === 'string') {
       const customWelcome = startupConfig.interface.customWelcome;
-      // Replace {{user.name}} with actual user name if available
-      if (user?.name && customWelcome.includes('{{user.name}}')) {
-        return customWelcome.replace(/{{user.name}}/g, user.name);
-      }
       return customWelcome;
     }
 
@@ -99,7 +95,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
     else {
       return localize('com_ui_good_evening');
     }
-  }, [localize, startupConfig?.interface?.customWelcome, user?.name]);
+  }, [localize, startupConfig?.interface?.customWelcome]);
 
   const handleLineCountChange = useCallback((count: number) => {
     setTextHasMultipleLines(count > 1);
@@ -137,6 +133,9 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
       ? getGreeting()
       : getGreeting() + (user?.name ? ', ' + user.name : '');
 
+  // 1. Check if a custom welcome message exists in librechat.yaml
+  const hasCustomWelcome = typeof startupConfig?.interface?.customWelcome === 'string';
+
   return (
     <div
       className={`flex h-full transform-gpu flex-col items-center justify-center pb-16 transition-all duration-200 ${centerFormOnLanding ? 'max-h-full sm:max-h-0' : 'max-h-full'} ${getDynamicMargin}`}
@@ -173,7 +172,8 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
               </TooltipAnchor>
             )}
           </div> */}
-          {((isAgent || isAssistant) && name) || name ? (
+          {/* 2. Modified Condition: Only display the Agent/Assistant Name if there is NO customWelcome set */}
+          {!hasCustomWelcome && (((isAgent || isAssistant) && name) || name) ? (
             <div className="flex flex-col items-center gap-0 p-2">
               <SplitText
                 key={`split-text-${name}`}
@@ -205,7 +205,8 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
             />
           )}
         </div>
-        {description && (
+        {/* 3. (Optional) Added !hasCustomWelcome to hide endpoint descriptions so it doesn't conflict with your TAIA message */}
+        {!hasCustomWelcome && description && (
           <div className="animate-fadeIn mt-4 max-w-md text-center text-sm font-normal text-text-primary">
             {description}
           </div>
