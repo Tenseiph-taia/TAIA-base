@@ -145,7 +145,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
         
         <img 
           src="/assets/taia_mascott_nobg.png" 
-          alt="TAIA Logo" 
+          alt="Tensei Mascott - TAIA" 
           className="h-48 w-auto object-contain opacity-90 transition-opacity hover:opacity-100" 
         />
 
