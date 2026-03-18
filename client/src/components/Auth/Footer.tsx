@@ -11,7 +11,7 @@ function Footer({ startupConfig }: { startupConfig: TStartupConfig | null | unde
 
   const privacyPolicyRender = privacyPolicy?.externalUrl && (
     <a
-      className="text-sm text-green-600 underline decoration-transparent transition-all duration-200 hover:text-green-700 hover:decoration-green-700 focus:text-green-700 focus:decoration-green-700 dark:text-green-500 dark:hover:text-green-400 dark:hover:decoration-green-400 dark:focus:text-green-400 dark:focus:decoration-green-400"
+      className="text-sm text-brand-yellow underline decoration-transparent transition-all duration-200 hover:text-brand-yellow/20 hover:decoration-brand-yellow/20 focus:text-brand-yellow focus:decoration-brand-yellow/20 dark:text-brand-yellow dark:hover:text-brand-yellow/80 dark:hover:decoration-brand-yellow/80 dark:focus:text-brand-yellow dark:focus:decoration-brand-yellow/80"
       href={privacyPolicy.externalUrl}
       // Removed for WCAG compliance
       // target={privacyPolicy.openNewTab ? '_blank' : undefined}
@@ -23,7 +23,7 @@ function Footer({ startupConfig }: { startupConfig: TStartupConfig | null | unde
 
   const termsOfServiceRender = termsOfService?.externalUrl && (
     <a
-      className="text-sm text-green-600 underline decoration-transparent transition-all duration-200 hover:text-green-700 hover:decoration-green-700 focus:text-green-700 focus:decoration-green-700 dark:text-green-500 dark:hover:text-green-400 dark:hover:decoration-green-400 dark:focus:text-green-400 dark:focus:decoration-green-400"
+      className="text-sm text-brand-yellow underline decoration-transparent transition-all duration-200 hover:text-brand-yellow/20 hover:decoration-brand-yellow/20 focus:text-brand-yellow focus:decoration-brand-yellow/20 dark:text-brand-yellow dark:hover:text-brand-yellow/80 dark:hover:decoration-brand-yellow/80 dark:focus:text-brand-yellow dark:focus:decoration-brand-yellow/80"
       href={termsOfService.externalUrl}
       // Removed for WCAG compliance
       // target={termsOfService.openNewTab ? '_blank' : undefined}

@@ -34,53 +34,68 @@ interface:
   fileSearch: true
   # Privacy policy settings
   privacyPolicy:
-    externalUrl: 'https://librechat.ai/privacy-policy'
-    openNewTab: true
+    externalUrl: 'https://www.tenseiph.com/privacy/'
+    openNewTab: false
 
   # Terms of service
   termsOfService:
-    externalUrl: 'https://librechat.ai/tos'
-    openNewTab: true
+    externalUrl: ''
+    openNewTab: false
     modalAcceptance: true
-    modalTitle: 'Terms of Service for LibreChat'
+    modalTitle: 'Terms of Service for TAIA'
     modalContent: |
       # Terms and Conditions for LibreChat
 
-      *Effective Date: February 18, 2024*
+      *Effective Date: March 01, 2026*
 
-      Welcome to LibreChat, the informational website for the open-source AI chat platform, available at https://librechat.ai. These Terms of Service ("Terms") govern your use of our website and the services we offer. By accessing or using the Website, you agree to be bound by these Terms and our Privacy Policy, accessible at https://librechat.ai//privacy.
+      Welcome to TAIA, a product of Tensei Philippines ("TAIA", "we", "us", or "our").
 
-      ## 1. Ownership
+      ## 1. Eligibility
 
-      Upon purchasing a package from LibreChat, you are granted the right to download and use the code for accessing an admin panel for LibreChat. While you own the downloaded code, you are expressly prohibited from reselling, redistributing, or otherwise transferring the code to third parties without explicit permission from LibreChat.
+      By using our Services, you represent and warrant that you are at least 18 years of age (or the age of legal majority in your jurisdiction) and have the legal capacity to enter into a binding contract with us. If you are using the Services on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.
 
-      ## 2. User Data
+      ## 2. Account Registration
 
-      We collect personal data, such as your name, email address, and payment information, as described in our Privacy Policy. This information is collected to provide and improve our services, process transactions, and communicate with you.
+      To access certain features of the Services, you may be required to create an account. You agree to:
+      - Provide accurate, current, and complete information during registration.
+      - Maintain and promptly update your account information.
+      - Keep your password secure and confidential.
+      - Notify us immediately if you discover or suspect any security breaches related to your account.
 
-      ## 3. Non-Personal Data Collection
+      You are entirely responsible for all activities that occur under your account.
 
-      The Website uses cookies to enhance user experience, analyze site usage, and facilitate certain functionalities. By using the Website, you consent to the use of cookies in accordance with our Privacy Policy.
+      ## 3. Acceptable Use and Conduct
 
-      ## 4. Use of the Website
+      You agree to use the Services only for lawful purposes. When using our Services, you agree not to:
+      - Violate any applicable laws, regulations, or third-party rights.
+      - Engage in any fraudulent, deceptive, or harmful activity.
+      - Upload, transmit, or distribute any viruses, malware, or other malicious computer code.
+      - Attempt to gain unauthorized access to our systems, networks, or other user accounts.
+      - Interfere with or disrupt the integrity or performance of the Services.
+      - Use automated scripts, bots, or scrapers to access, copy, or collect content from the Services without our permission.
 
-      You agree to use the Website only for lawful purposes and in a manner that does not infringe the rights of, restrict, or inhibit anyone else's use and enjoyment of the Website. Prohibited behavior includes harassing or causing distress or inconvenience to any person, transmitting obscene or offensive content, or disrupting the normal flow of dialogue within the Website.
+      ## 4. Intellectual Property Rights
 
-      ## 5. Governing Law
+      All content, design, graphics, text, logos, software, and other materials on the Services are the intellectual property of Tensei Philippines Inc. or our licensors, protected by copyright, trademark, and other intellectual property laws. You are granted a limited, non-exclusive, non-transferable license to access and use the Services for your personal, non-commercial use. You may not reproduce, modify, distribute, or create derivative works from our content without our express written consent.
 
-      These Terms shall be governed by and construed in accordance with the laws of the United States, without giving effect to any principles of conflicts of law.
+      ## 5. User Content
 
-      ## 6. Changes to the Terms
+      If our Services allow you to post, upload, or submit content ("User Content"), you retain all rights to your User Content. However, by submitting User Content, you grant us a worldwide, royalty-free, non-exclusive, sublicensable license to use, reproduce, modify, adapt, publish, and display such content to provide and promote the Services. You represent that you own or have the necessary rights to all User Content you submit.
 
-      We reserve the right to modify these Terms at any time. We will notify users of any changes by email. Your continued use of the Website after such changes have been notified will constitute your consent to such changes.
+      ## 6. Third-Party Links and Services
+
+      Our Services may contain links to third-party websites or services that are not owned or controlled by us. We assume no responsibility for the content, privacy policies, or practices of any third-party websites. You acknowledge and agree that we shall not be liable for any damage or loss caused by your use of any third-party content or services.
 
       ## 7. Contact Information
 
-      If you have any questions about these Terms, please contact us at contact@librechat.ai.
+      If you have any questions about these Terms, please contact us at: 
+      - Email: info@tenseiph.com.
+      - Mailing Address: Tensei Philippines, Inc., 1234 Main Street, Makati City, Philippines.
+      - Website: https://tenseiph.com
 
-      By using the Website, you acknowledge that you have read these Terms of Service and agree to be bound by them.
+      By using the Application, you acknowledge that you have read these Terms of Service and agree to be bound by them.
 
-  endpointsMenu: true
+  endpointsMenu: false
   modelSelect: true
   parameters: true
   sidePanel: true

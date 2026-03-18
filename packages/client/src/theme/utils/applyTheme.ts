@@ -57,7 +57,7 @@ function mapTheme(rgb: IThemeRGB): Partial<IThemeVariables> {
     'rgb-border-medium-alt': '--border-medium-alt',
     'rgb-border-heavy': '--border-heavy',
     'rgb-border-xheavy': '--border-xheavy',
-    'rgb-brand-purple': '--brand-purple',
+    'rgb-brand-yellow': '--brand-yellow',
     'rgb-presentation': '--presentation',
 
     // Utility colors

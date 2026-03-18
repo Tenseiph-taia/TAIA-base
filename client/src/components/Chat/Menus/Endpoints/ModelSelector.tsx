@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { TooltipAnchor } from '@librechat/client';
 import { getConfigDefaults } from 'librechat-data-provider';
 import type { ModelSelectorProps } from '~/common';
@@ -14,9 +14,13 @@ import { getSelectedIcon, getDisplayValue } from './utils';
 import { CustomMenu as Menu } from './CustomMenu';
 import DialogManager from './DialogManager';
 import { useLocalize } from '~/hooks';
+import { useAuthContext } from '~/hooks/AuthContext';
 
 function ModelSelectorContent() {
   const localize = useLocalize();
+
+  const { user } = useAuthContext();
+  const isRegularUser = user?.role === 'USER';
 
   const {
     // LibreChat
@@ -37,6 +41,50 @@ function ModelSelectorContent() {
     keyDialogEndpoint,
   } = useModelSelectorContext();
 
+  const defaultAgentId = useMemo(() => {
+    if (!agentsMap) return '';
+    const ids = Object.keys(agentsMap);
+    return ids.length > 0 ? ids[0] : '';
+  }, [agentsMap]);
+
+  useEffect(() => {
+  
+    if (isRegularUser && defaultAgentId !== '') {
+      
+      localStorage.setItem('lastSelectedEndpoint', '"agents"');
+
+      if (selectedValues.endpoint !== 'agents' || selectedValues.model !== defaultAgentId) {
+        setSelectedValues({
+          endpoint: 'agents',
+          model: defaultAgentId,
+          modelSpec: '',
+        });
+      }
+    }
+  }, [isRegularUser, defaultAgentId, selectedValues.endpoint, selectedValues.model, setSelectedValues]);
+
+  const filteredEndpoints = useMemo(() => {
+    if (!mappedEndpoints) return [];
+    if (isRegularUser) {
+      return mappedEndpoints.filter((ep: any) => {
+        const epName = typeof ep === 'string' ? ep : (ep?.endpoint || ep?.name || ep?.value || '');
+        return epName.toLowerCase().includes('agent');
+      });
+    }
+    return mappedEndpoints;
+  }, [mappedEndpoints, isRegularUser]);
+
+  const filteredSearchResults = useMemo(() => {
+    if (!searchResults) return undefined;
+    if (isRegularUser) {
+      return searchResults.filter((item: any) => {
+        const itemName = typeof item === 'string' ? item : (item?.endpoint || item?.value || '');
+        return itemName.toLowerCase().includes('agent');
+      });
+    }
+    return searchResults;
+  }, [searchResults, isRegularUser]);
+
   const selectedIcon = useMemo(
     () =>
       getSelectedIcon({
@@ -47,6 +95,7 @@ function ModelSelectorContent() {
       }),
     [mappedEndpoints, selectedValues, modelSpecs, endpointsConfig],
   );
+  
   const selectedDisplayValue = useMemo(
     () =>
       getDisplayValue({
@@ -95,19 +144,18 @@ function ModelSelectorContent() {
         comboboxLabel={localize('com_endpoint_search_models')}
         trigger={trigger}
       >
-        {searchResults ? (
-          renderSearchResults(searchResults, localize, searchValue)
+        {filteredSearchResults ? (
+          renderSearchResults(filteredSearchResults, localize, searchValue)
         ) : (
           <>
-            {/* Render ungrouped modelSpecs (no group field) */}
-            {renderModelSpecs(
+            {!isRegularUser && renderModelSpecs(
               modelSpecs?.filter((spec) => !spec.group) || [],
               selectedValues.modelSpec || '',
             )}
-            {/* Render endpoints (will include grouped specs matching endpoint names) */}
-            {renderEndpoints(mappedEndpoints ?? [])}
-            {/* Render custom groups (specs with group field not matching any endpoint) */}
-            {renderCustomGroups(modelSpecs || [], mappedEndpoints ?? [])}
+            
+            {renderEndpoints(filteredEndpoints)}
+            
+            {!isRegularUser && renderCustomGroups(modelSpecs || [], mappedEndpoints ?? [])}
           </>
         )}
       </Menu>
@@ -125,7 +173,6 @@ export default function ModelSelector({ startupConfig }: ModelSelectorProps) {
   const interfaceConfig = startupConfig?.interface ?? getConfigDefaults().interface;
   const modelSpecs = startupConfig?.modelSpecs?.list ?? [];
 
-  // Hide the selector when modelSelect is false and there are no model specs to show
   if (interfaceConfig.modelSelect === false && modelSpecs.length === 0) {
     return null;
   }

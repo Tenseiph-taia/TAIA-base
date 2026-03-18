@@ -1,13 +1,17 @@
-import React, { useEffect, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import TagManager from 'react-gtm-module';
 import ReactMarkdown from 'react-markdown';
 import { Constants } from 'librechat-data-provider';
+import TermsAndConditionsModal from '~/components/ui/TermsAndConditionsModal';
 import { useGetStartupConfig } from '~/data-provider';
 import { useLocalize } from '~/hooks';
 
 function Footer({ className }: { className?: string }) {
   const { data: config } = useGetStartupConfig();
   const localize = useLocalize();
+  
+  // Add state to control modal visibility manually from footer
+  const[isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   const privacyPolicy = config?.interface?.privacyPolicy;
   const termsOfService = config?.interface?.termsOfService;
@@ -18,11 +22,26 @@ function Footer({ className }: { className?: string }) {
     </a>
   );
 
-  const termsOfServiceRender = termsOfService?.externalUrl != null && (
-    <a className="text-text-secondary underline" href={termsOfService.externalUrl} rel="noreferrer">
-      {localize('com_ui_terms_of_service')}
-    </a>
-  );
+  let termsOfServiceRender: React.ReactNode = null;
+
+  // Use the modal button if modalContent exists, otherwise fallback to standard anchor tag
+  if (termsOfService?.modalContent) {
+    termsOfServiceRender = (
+      <button
+        type="button"
+        className="text-text-secondary underline"
+        onClick={() => setIsTermsModalOpen(true)}
+      >
+        {localize('com_ui_terms_of_service')}
+      </button>
+    );
+  } else if (termsOfService?.externalUrl != null) {
+    termsOfServiceRender = (
+      <a className="text-text-secondary underline" href={termsOfService.externalUrl} rel="noreferrer">
+        {localize('com_ui_terms_of_service')}
+      </a>
+    );
+  }
 
   const mainContentParts = (
     typeof config?.customFooter === 'string'
@@ -40,7 +59,7 @@ function Footer({ className }: { className?: string }) {
       };
       TagManager.initialize(tagManagerArgs);
     }
-  }, [config?.analyticsGtmId]);
+  },[config?.analyticsGtmId]);
 
   const mainContentRender = mainContentParts.map((text, index) => (
     <React.Fragment key={`main-content-part-${index}`}>
@@ -95,6 +114,16 @@ function Footer({ className }: { className?: string }) {
           );
         })}
       </div>
+
+      {/* Render Modal for reading */}
+      {termsOfService?.modalContent && (
+        <TermsAndConditionsModal
+          open={isTermsModalOpen}
+          onOpenChange={setIsTermsModalOpen}
+          modalContent={termsOfService.modalContent}
+          isReadOnly={true}
+        />
+      )}
     </div>
   );
 }
