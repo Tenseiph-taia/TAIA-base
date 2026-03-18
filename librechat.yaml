@@ -200,6 +200,10 @@ actions:
     - 'swapi.dev'
     - 'librechat.ai'
     - 'google.com'
+    - 'localhost'
+    - 'localhost:3080'
+    - '127.0.0.1'
+    - '127.0.0.1:3080'
     # - 'http://10.225.26.25:7894'  # Internal IP with protocol/port (uncomment if needed)
 
 # MCP Server domain restrictions for remote transports (SSE, WebSocket, HTTP)
