@@ -31,6 +31,7 @@ services:
     volumes:
       - ./librechat.yaml:/app/librechat.yaml
       - ./docs:/app/docs
+      - ./leads:/app/leads
 
   # EXPOSE MONGODB PORTS - USE CAREFULLY, THIS MAKES YOUR DATABASE VULNERABLE TO ATTACKS
   mongodb:

@@ -18,6 +18,47 @@ const DownloadArtifact = ({ artifact }: { artifact: Artifact }) => {
       if (!content) {
         return;
       }
+
+      const isHTML = artifact.type === 'application/vnd.ant.html' ||
+        artifact.type === 'text/html' ||
+        content.trimStart().toLowerCase().startsWith('<!doctype html') ||
+        content.trimStart().toLowerCase().startsWith('<html');
+
+      if (isHTML) {
+        // Open in new window and trigger print-to-PDF
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          return;
+        }
+        const printCSS = `
+          <style>
+            @media print {
+              @page { margin: 20mm; size: A4; }
+              body { font-family: Arial, sans-serif; }
+              button { display: none !important; }
+              table { page-break-inside: avoid; }
+              h2 { page-break-after: avoid; }
+            }
+          </style>
+        `;
+        // Inject print CSS into the HTML content
+        const contentWithPrintCSS = content.includes('</head>')
+          ? content.replace('</head>', `${printCSS}</head>`)
+          : `${printCSS}${content}`;
+
+        printWindow.document.write(contentWithPrintCSS);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+
+        setIsDownloaded(true);
+        setTimeout(() => setIsDownloaded(false), 3000);
+        return;
+      }
+
+      // Default download for non-HTML artifacts
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -40,6 +81,11 @@ const DownloadArtifact = ({ artifact }: { artifact: Artifact }) => {
       variant="ghost"
       onClick={handleDownload}
       aria-label={localize('com_ui_download_artifact')}
+      title={
+        artifact.type === 'application/vnd.ant.html'
+          ? 'Download as PDF'
+          : localize('com_ui_download_artifact')
+      }
     >
       {isDownloaded ? (
         <CircleCheckBig size={16} aria-hidden="true" />
