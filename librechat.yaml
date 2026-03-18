@@ -93,9 +93,9 @@ interface:
       - Mailing Address: Tensei Philippines, Inc., 1234 Main Street, Makati City, Philippines.
       - Website: https://tenseiph.com
 
-      By using the Website, you acknowledge that you have read these Terms of Service and agree to be bound by them.
+      By using the Application, you acknowledge that you have read these Terms of Service and agree to be bound by them.
 
-  endpointsMenu: true
+  endpointsMenu: false
   modelSelect: true
   parameters: true
   sidePanel: true

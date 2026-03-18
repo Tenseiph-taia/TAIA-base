@@ -47,7 +47,7 @@ export const darkTheme: IThemeRGB = {
   'rgb-border-xheavy': '153 150 150', // #999696 (gray-400)
 
   // Brand colors
-  'rgb-brand-purple': '171 104 255', // #ab68ff
+  'rgb-brand-yellow': '255 198 66', // hsl(42, 100%, 63%)
 
   // Presentation
   'rgb-presentation': '33 33 33', // #212121 (gray-800)
