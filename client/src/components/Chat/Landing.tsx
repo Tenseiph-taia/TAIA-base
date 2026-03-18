@@ -144,9 +144,9 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
       <div ref={contentRef} className="flex flex-col items-center gap-0 p-2">
         
         <img 
-          src="/assets/animated_logo.gif" 
-          alt="TAIA Logo" 
-          className="h-40 w-auto object-contain opacity-90 transition-opacity hover:opacity-100" 
+          src="/assets/taia_mascott_nobg.png" 
+          alt="Tensei Mascott - TAIA" 
+          className="h-48 w-auto object-contain opacity-90 transition-opacity hover:opacity-100" 
         />
 
         <div

@@ -56,7 +56,7 @@ const agentData = {
   mcpServerNames: [],
   support_contact: { name: '', email: '' },
   avatar: {
-    filepath: '/assets/animated_logo.gif',
+    filepath: '/assets/mascott_head.png',
     source: "local"
   }
 };

@@ -338,7 +338,7 @@ endpoints:
   custom:
     - name: "TAIA-dev"
       apiKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE2NS5vaA63LU/rBDJsoE4QWwqhH/flOzrsMoDNPvJnh"
-      iconURL: "/assets/logo.png"
+      iconURL: "/assets/mascott_head.png"
       baseURL: "http://ollama:11434/v1" 
       models:
         default:
@@ -347,13 +347,13 @@ endpoints:
       titleConvo: true
       titleModel: "nemotron-3-super:cloud"
       modelDisplayLabel: "TAIA Dev"
-      num_ctx: 32768
-      maxContent: 32768
+      num_ctx: 131042
+      maxContent: 131072
 
     - name: "TAIA-Production"
       baseURL: "http://vllm:8000/v1"
       apiKey: "sk-enterprise-secure-key"
-      iconURL: "/assets/logo.png"
+      iconURL: "/assets/mascott_head.png"
       models:
         default: [ "meta-llama/Llama-3.3-70B-Instruct" ]
         fetch: false
