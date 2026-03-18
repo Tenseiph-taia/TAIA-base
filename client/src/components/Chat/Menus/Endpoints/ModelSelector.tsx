@@ -14,14 +14,11 @@ import { getSelectedIcon, getDisplayValue } from './utils';
 import { CustomMenu as Menu } from './CustomMenu';
 import DialogManager from './DialogManager';
 import { useLocalize } from '~/hooks';
-
-// 1. IMPORT TO GET USER ROLE
 import { useAuthContext } from '~/hooks/AuthContext';
 
 function ModelSelectorContent() {
   const localize = useLocalize();
 
-  // 2. GET USER AND CHECK IF REGULAR USER
   const { user } = useAuthContext();
   const isRegularUser = user?.role === 'USER';
 
@@ -44,33 +41,28 @@ function ModelSelectorContent() {
     keyDialogEndpoint,
   } = useModelSelectorContext();
 
-  // 3. GET THE FIRST AVAILABLE AGENT ID SAFELY
   const defaultAgentId = useMemo(() => {
     if (!agentsMap) return '';
     const ids = Object.keys(agentsMap);
     return ids.length > 0 ? ids[0] : '';
   }, [agentsMap]);
 
-  // 4. WAIT FOR AGENTS TO LOAD, THEN AUTO-SELECT
   useEffect(() => {
-    // Only run this if they are a regular user AND the agents have finished loading
+  
     if (isRegularUser && defaultAgentId !== '') {
       
-      // Force browser to remember 'agents' 
       localStorage.setItem('lastSelectedEndpoint', '"agents"');
 
-      // If the current backend conversation is NOT securely on the Agent yet, force it!
       if (selectedValues.endpoint !== 'agents' || selectedValues.model !== defaultAgentId) {
         setSelectedValues({
           endpoint: 'agents',
-          model: defaultAgentId, // Now we guarantee this is a real Agent ID, not an empty string!
+          model: defaultAgentId,
           modelSpec: '',
         });
       }
     }
   }, [isRegularUser, defaultAgentId, selectedValues.endpoint, selectedValues.model, setSelectedValues]);
 
-  // 5. FILTER ENDPOINTS SAFELY
   const filteredEndpoints = useMemo(() => {
     if (!mappedEndpoints) return [];
     if (isRegularUser) {
@@ -79,10 +71,9 @@ function ModelSelectorContent() {
         return epName.toLowerCase().includes('agent');
       });
     }
-    return mappedEndpoints; // Admins see everything
+    return mappedEndpoints;
   }, [mappedEndpoints, isRegularUser]);
 
-  // 6. FILTER SEARCH RESULTS SAFELY
   const filteredSearchResults = useMemo(() => {
     if (!searchResults) return undefined;
     if (isRegularUser) {
@@ -157,16 +148,13 @@ function ModelSelectorContent() {
           renderSearchResults(filteredSearchResults, localize, searchValue)
         ) : (
           <>
-            {/* HIDE Model Specs for regular users */}
             {!isRegularUser && renderModelSpecs(
               modelSpecs?.filter((spec) => !spec.group) || [],
               selectedValues.modelSpec || '',
             )}
             
-            {/* SHOW safely filtered endpoints (Users see Agents, Admins see all) */}
             {renderEndpoints(filteredEndpoints)}
             
-            {/* HIDE Custom Groups for regular users */}
             {!isRegularUser && renderCustomGroups(modelSpecs || [], mappedEndpoints ?? [])}
           </>
         )}
