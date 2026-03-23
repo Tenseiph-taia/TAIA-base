@@ -27,7 +27,7 @@ cache: true
 
 # Custom interface configuration
 interface:
-  # customWelcome: 'Welcome to LibreChat! Enjoy your experience.'
+  customWelcome: 'Hi! I am TAIA, your Tensei AI Agent. Ask me anything!'
   # Enable/disable file search as a chatarea selection (default: true)
   # Note: This setting does not disable the Agents File Search Capability.
   # To disable the Agents Capability, see the Agents Endpoint configuration instead.
