@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { EModelEndpoint, Constants } from 'librechat-data-provider';
 import { useChatContext, useAgentsMapContext, useAssistantsMapContext } from '~/Providers';
 import { useGetAssistantDocsQuery, useGetEndpointsQuery } from '~/data-provider';
+import { useGetAgentByIdQuery } from '~/data-provider/Agents/queries';
 import { getIconEndpoint, getEntity } from '~/utils';
 import { useSubmitMessage } from '~/hooks';
 
@@ -35,17 +36,24 @@ const ConversationStarters = () => {
     assistant_id: conversation?.assistant_id,
   });
 
+  // Fetch full agent data to get conversation_starters
+  const { data: fullAgent } = useGetAgentByIdQuery(
+    isAgent ? conversation?.agent_id : null,
+  );
+
   const conversation_starters = useMemo(() => {
+    // Use full agent data first (includes conversation_starters)
+    if (fullAgent?.conversation_starters?.length) {
+      return fullAgent.conversation_starters;
+    }
     if (entity?.conversation_starters?.length) {
       return entity.conversation_starters;
     }
-
     if (isAgent) {
       return [];
     }
-
     return documentsMap.get(entity?.id ?? '')?.conversation_starters ?? [];
-  }, [documentsMap, isAgent, entity]);
+  }, [documentsMap, isAgent, entity, fullAgent]);
 
   const { submitMessage } = useSubmitMessage();
   const sendConversationStarter = useCallback(
@@ -67,7 +75,7 @@ const ConversationStarters = () => {
             onClick={() => sendConversationStarter(text)}
             className="relative flex w-40 cursor-pointer flex-col gap-2 rounded-2xl border border-border-medium px-3 pb-4 pt-3 text-start align-top text-[15px] shadow-[0_0_2px_0_rgba(0,0,0,0.05),0_4px_6px_0_rgba(0,0,0,0.02)] transition-colors duration-300 ease-in-out fade-in hover:bg-surface-tertiary"
           >
-            <p className="break-word line-clamp-3 overflow-hidden text-balance break-all text-text-secondary">
+            <p className="break-word line-clamp-3 overflow-hidden text-balance break-words text-text-secondary">
               {text}
             </p>
           </button>

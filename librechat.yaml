@@ -35,7 +35,7 @@ interface:
   # Privacy policy settings
   privacyPolicy:
     externalUrl: 'https://www.tenseiph.com/privacy/'
-    openNewTab: false
+    openNewTab: true
 
   # Terms of service
   termsOfService:
@@ -44,7 +44,7 @@ interface:
     modalAcceptance: true
     modalTitle: 'Terms of Service for TAIA'
     modalContent: |
-      # Terms and Conditions for LibreChat
+      # Terms and Conditions for TAIA
 
       *Effective Date: March 01, 2026*
 
@@ -277,11 +277,11 @@ endpoints:
   #   retrievalModels: ["gpt-4-turbo-preview"]
   #   # (optional) Assistant Capabilities available to all users. Omit the ones you wish to exclude. Defaults to list below.
   #   capabilities: ["code_interpreter", "retrieval", "actions", "tools", "image_vision"]
-  # agents:
+  agents:
   #   # (optional) Default recursion depth for agents, defaults to 25
-  #   recursionLimit: 50
+    recursionLimit: 50
   #   # (optional) Max recursion depth for agents, defaults to 25
-  #   maxRecursionLimit: 100
+    maxRecursionLimit: 100
   #   # (optional) Disable the builder interface for agents
   #   disableBuilder: false
   #   # (optional) Maximum total citations to include in agent responses, defaults to 30
@@ -366,7 +366,7 @@ endpoints:
       titleConvo: true
       titleModel: "nemotron-3-super:cloud"
       modelDisplayLabel: "TAIA Dev"
-      num_ctx: 131042
+      num_ctx: 131072
       maxContent: 131072
 
     - name: "TAIA-Production"
