@@ -1,6 +1,7 @@
 const { logger, ResourceCapabilityMap } = require('@librechat/data-schemas');
 const { hasCapability } = require('~/server/middleware/roles/capabilities');
 const { checkPermission } = require('~/server/services/PermissionService');
+const { ResourceType } = require('librechat-data-provider');
 
 /**
  * Generic base middleware factory that creates middleware to check resource access permissions.

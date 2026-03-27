@@ -26,13 +26,14 @@ function getAttachedFileIds(agent) {
  * Access is always scoped to files actually attached to the agent's tool_resources.
  * @param {Object} params - Parameters object
  * @param {string} params.userId - The user ID to check access for
- * @param {string} [params.role] - Optional user role to avoid DB query
+ * @param {string}[params.role] - Optional user role to avoid DB query
  * @param {string[]} params.fileIds - Array of file IDs to check
  * @param {string} params.agentId - The agent ID that might grant access
  * @param {boolean} [params.isDelete] - Whether the operation is a delete operation
+ * @param {string[]} [params.userDepartments] - Array of user departments for custom RBAC
  * @returns {Promise<Map<string, boolean>>} Map of fileId to access status
  */
-const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete }) => {
+const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete, userDepartments }) => {
   const accessMap = new Map();
 
   fileIds.forEach((fileId) => accessMap.set(fileId, false));
@@ -63,22 +64,17 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
       requiredPermission: PermissionBits.VIEW,
     });
 
+    // --- RBAC: FILE ACCESS BY DEPARTMENT ---
     if (!hasViewPermission) {
       if (userDepartments && Array.isArray(userDepartments)) {
         const agentCategory = String(agent.category ?? '').toUpperCase();
         const userDepts = userDepartments.map(d => String(d).toUpperCase());
+        
         if (!userDepts.includes('GENERAL')) {
           userDepts.push('GENERAL');
         }
+        
         if (agentCategory && userDepts.includes(agentCategory)) {
-          const attachedFileIds = new Set();
-          if (agent.tool_resources) {
-            for (const [_resourceType, resource] of Object.entries(agent.tool_resources)) {
-              if (resource?.file_ids && Array.isArray(resource.file_ids)) {
-                resource.file_ids.forEach((fileId) => attachedFileIds.add(fileId));
-              }
-            }
-          }
           fileIds.forEach((fileId) => {
             if (attachedFileIds.has(fileId)) {
               accessMap.set(fileId, true);
@@ -87,9 +83,9 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
           return accessMap;
         }
       }
-
       return accessMap;
     }
+    // ---------------------------------------------------
 
     if (isDelete) {
       const hasEditPermission = await checkPermission({

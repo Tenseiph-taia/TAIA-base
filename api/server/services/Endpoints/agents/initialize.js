@@ -246,13 +246,32 @@ const initializeClient = async ({ req, res, signal, endpointOption }) => {
       return null;
     }
 
-    const hasAccess = await checkPermission({
+    let hasAccess = await checkPermission({
       userId: req.user.id,
       role: req.user.role,
       resourceType: ResourceType.AGENT,
       resourceId: agent._id,
       requiredPermission: PermissionBits.VIEW,
     });
+
+    // --- RBAC: HANDOFF ACCESS BY DEPARTMENT ---
+    if (!hasAccess && req.user.role !== 'ADMIN') {
+      const userDepts = Array.isArray(req.user.departments)
+        ? req.user.departments.map(d => String(d).toUpperCase())
+        :[];
+        
+      // Always allow general agents
+      if (!userDepts.includes('GENERAL')) {
+        userDepts.push('GENERAL');
+      }
+
+      const agentCategory = String(agent.category ?? '').toUpperCase();
+      
+      if (agentCategory && userDepts.includes(agentCategory)) {
+        hasAccess = true; // Override native ACL and grant access!
+      }
+    }
+    // ------------------------------------------------------
 
     if (!hasAccess) {
       logger.warn(
