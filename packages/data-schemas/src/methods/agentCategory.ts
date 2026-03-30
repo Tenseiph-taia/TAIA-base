@@ -1,5 +1,6 @@
 import type { Model, Types } from 'mongoose';
 import type { IAgentCategory } from '~/types';
+import { tenantSafeBulkWrite } from '~/utils/tenantBulkWrite';
 
 export function createAgentCategoryMethods(mongoose: typeof import('mongoose')) {
   
