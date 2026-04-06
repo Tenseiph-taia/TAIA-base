@@ -27,11 +27,9 @@ services:
   api:
     build:
       context: .
-      target: node
     volumes:
       - ./librechat.yaml:/app/librechat.yaml
       - ./docs:/app/docs
-      - ./leads:/app/leads
 
   # EXPOSE MONGODB PORTS - USE CAREFULLY, THIS MAKES YOUR DATABASE VULNERABLE TO ATTACKS
   mongodb:
@@ -58,6 +56,54 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    
+  web_tools:
+    build:
+      context: ./mcps/web-tools
+      dockerfile: Dockerfile
+    container_name: web_tools
+    volumes:
+      - ./mcps/web-tools:/app
+      - /app/.venv
+    environment:
+      - PYTHONUNBUFFERED=1
+      - VIRTUAL_ENV=/app/.venv
+      - TAVILY_API_KEY=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
+    ports:
+      - "8002:8000"
+    networks:
+      - default
+
+  taia-sales-mcp:
+    build:
+      context: ./mcps/taia-sales/mcp
+      dockerfile: Dockerfile
+    container_name: taia_sales_mcp
+    restart: unless-stopped
+    volumes:
+      - sales_data:/app/data
+    environment:
+      - DB_PATH=/app/data/sales_demo.db
+      - PYTHONUNBUFFERED=1
+    networks:
+      - default
+
+  taia-sales-admin:
+    build:
+      context: ./mcps/taia-sales/admin
+      dockerfile: Dockerfile
+    container_name: taia_sales_admin
+    restart: unless-stopped
+    volumes:
+      - sales_data:/app/data
+    environment:
+      - DB_PATH=/app/data/sales_demo.db
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8001:8001"   # Admin panel calls this from the browser
+    networks:
+      - default
+
 # # LOCAL BUILD
 #   api:
 #     image: librechat
@@ -180,3 +226,4 @@ services:
 volumes:
   ollama_data:
   huggingface_cache:
+  sales_data:
