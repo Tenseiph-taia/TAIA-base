@@ -88,11 +88,11 @@ export default function Settings({ open, onOpenChange }: TDialogProps) {
       icon: <Command className="icon-sm" aria-hidden="true" />,
       label: 'com_nav_commands',
     },
-    // {
-    //   value: SettingsTabValues.SPEECH,
-    //   icon: <SpeechIcon className="icon-sm" aria-hidden="true" />,
-    //   label: 'com_nav_setting_speech',
-    // },
+    {
+      value: SettingsTabValues.SPEECH,
+      icon: <SpeechIcon className="icon-sm" aria-hidden="true" />,
+      label: 'com_nav_setting_speech',
+    },
     ...(hasAnyPersonalizationFeature
       ? [
           {
@@ -229,9 +229,9 @@ export default function Settings({ open, onOpenChange }: TDialogProps) {
                     <Tabs.Content value={SettingsTabValues.COMMANDS} tabIndex={-1}>
                       <Commands />
                     </Tabs.Content>
-                    {/* <Tabs.Content value={SettingsTabValues.SPEECH} tabIndex={-1}>
+                    <Tabs.Content value={SettingsTabValues.SPEECH} tabIndex={-1}>
                       <Speech />
-                    </Tabs.Content> */}
+                    </Tabs.Content>
                     {hasAnyPersonalizationFeature && (
                       <Tabs.Content value={SettingsTabValues.PERSONALIZATION} tabIndex={-1}>
                         <Personalization
