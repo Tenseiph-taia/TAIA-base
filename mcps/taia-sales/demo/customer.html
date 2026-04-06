@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus Grid Systems — Enterprise Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── TOKENS ───────────────────────────────────────────────────────────────── */
+  :root {
+    --brand:      #00d4ff;
+    --brand-dark: #0072ff;
+    --surface:    #0b0e14;
+    --surface2:   #151921;
+    --surface3:   #1e2530;
+    --text:       #f1f5f9;
+    --muted:      #8888AA;
+    --radius:     12px;
+    --chat-w:     720px;
+    --chat-h:     600px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── STATUS BAR ───────────────────────────────────────────────────────────── */
+  .status-bar {
+    background: rgba(0,212,255,.05);
+    border-bottom: 1px solid rgba(0,212,255,.12);
+    padding: .45rem 2.5rem;
+    display: flex; gap: 2rem; align-items: center;
+    font-family: 'Orbitron', monospace;
+    font-size: .62rem; color: var(--brand);
+    letter-spacing: .07em;
+  }
+  .status-item { display: flex; align-items: center; gap: .4rem; white-space: nowrap; }
+  .sdot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; animation: blink 2s ease-in-out infinite; }
+  .sdot.warn { background: #f59e0b; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── NAV ──────────────────────────────────────────────────────────────────── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(11,14,20,.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(0,212,255,.13);
+  }
+  .logo {
+    display: flex; align-items: center; gap: .6rem;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700; font-size: .9rem; letter-spacing: 2.5px;
+    text-decoration: none; color: var(--text);
+  }
+  .logo span { color: var(--brand); }
+  nav ul { list-style: none; display: flex; gap: 2rem; }
+  nav a { color: var(--muted); text-decoration: none; font-size: .88rem; font-weight: 500; transition: color .2s; }
+  nav a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--brand); color: #000;
+    padding: .5rem 1.3rem; border-radius: 99px;
+    font-size: .82rem; font-weight: 700; text-decoration: none;
+    transition: background .2s, box-shadow .2s;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .5px;
+    white-space: nowrap;
+  }
+  .nav-cta:hover { background: #fff; box-shadow: 0 0 24px rgba(0,212,255,.35); }
+
+  /* ── HERO ─────────────────────────────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 5rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  /* animated grid */
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,.055) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 30%, transparent 100%);
+    animation: gridDrift 24s linear infinite;
+  }
+  /* glow orb */
+  .hero::after {
+    content: '';
+    position: absolute; top: -15%; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(0,212,255,.11) 0%, rgba(0,114,255,.05) 45%, transparent 70%);
+    animation: orbPulse 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes gridDrift { from{background-position:0 0} to{background-position:64px 64px} }
+  @keyframes orbPulse { 0%,100%{opacity:.8;transform:translateX(-50%) scale(1)} 50%{opacity:1;transform:translateX(-50%) scale(1.07)} }
+
+  .hero-content { position: relative; z-index: 1; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.35);
+    color: var(--brand); border-radius: 99px;
+    padding: .35rem 1.1rem; margin-bottom: 2rem;
+    font-family: 'Orbitron', monospace; font-size: .65rem; font-weight: 700; letter-spacing: .1em;
+    animation: fadeUp .6s ease both;
+  }
+  .hero-badge::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--brand); animation: blink 1.5s ease-in-out infinite;
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5.5vw, 4.4rem);
+    font-weight: 900; line-height: 1.1;
+    max-width: 860px; letter-spacing: -1px;
+    animation: fadeUp .6s .15s ease both;
+  }
+  .hero h1 em { font-style: normal; color: var(--brand); }
+
+  .hero-sub {
+    color: var(--muted); font-size: 1.05rem;
+    max-width: 540px; margin: 1.5rem auto 2.5rem;
+    line-height: 1.8; animation: fadeUp .6s .3s ease both;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    animation: fadeUp .6s .45s ease both;
+  }
+
+  .btn-primary {
+    background: var(--brand); color: #000;
+    padding: .82rem 2.2rem; border-radius: 99px;
+    font-size: 1rem; font-weight: 700; text-decoration: none;
+    border: none; cursor: pointer; transition: all .22s;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .5px;
+  }
+  .btn-primary:hover { background: #fff; box-shadow: 0 0 32px rgba(0,212,255,.4); transform: translateY(-2px); }
+
+  .btn-outline {
+    background: transparent; color: var(--text);
+    padding: .82rem 2.2rem; border-radius: 99px;
+    font-size: 1rem; font-weight: 600; text-decoration: none;
+    border: 1px solid rgba(255,255,255,.18); cursor: pointer; transition: all .22s;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .5px;
+  }
+  .btn-outline:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-2px); }
+
+  .hero-kpis {
+    display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap;
+    margin-top: 4.5rem; padding-top: 3rem;
+    border-top: 1px solid rgba(255,255,255,.07);
+    animation: fadeUp .6s .6s ease both;
+  }
+  .hero-kpi { text-align: center; }
+  .hero-kpi-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.9rem; font-weight: 900; color: var(--brand);
+    display: block;
+  }
+  .hero-kpi-lbl { font-size: .72rem; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── TICKER ───────────────────────────────────────────────────────────────── */
+  .ticker-bar {
+    overflow: hidden; padding: .6rem 0;
+    background: rgba(0,212,255,.05);
+    border-top: 1px solid rgba(0,212,255,.13);
+    border-bottom: 1px solid rgba(0,212,255,.13);
+    font-family: 'Orbitron', monospace;
+    font-size: .65rem; color: var(--brand); letter-spacing: .07em;
+  }
+  .ticker-track {
+    display: flex; gap: 4rem;
+    animation: ticker 32s linear infinite;
+    white-space: nowrap; width: max-content;
+  }
+  .ticker-track:hover { animation-play-state: paused; }
+  .ti { display: flex; align-items: center; gap: .55rem; }
+  .ti::before { content:''; width:4px; height:4px; border-radius:50%; background:var(--brand); flex-shrink:0; }
+  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* ── SHARED SECTION ───────────────────────────────────────────────────────── */
+  .sec { padding: 6rem 2.5rem; }
+  .sec-inner { max-width: 1200px; margin: 0 auto; }
+
+  .sec-label {
+    display: inline-flex; align-items: center; gap: .6rem;
+    font-family: 'Orbitron', monospace; font-size: .64rem;
+    letter-spacing: .12em; color: var(--brand); text-transform: uppercase;
+    margin-bottom: .9rem;
+  }
+  .sec-label::before { content:''; display:inline-block; width:22px; height:1px; background:var(--brand); }
+  .sec-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    font-weight: 700; line-height: 1.15; margin-bottom: .75rem;
+  }
+  .sec-title em { font-style: normal; color: var(--brand); }
+  .sec-sub { color: var(--muted); font-size: 1rem; max-width: 560px; line-height: 1.75; }
+
+  /* Scroll reveal */
+  .rv { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+  .rv.on { opacity: 1; transform: translateY(0); }
+  .d1 { transition-delay: .1s; }
+  .d2 { transition-delay: .2s; }
+  .d3 { transition-delay: .3s; }
+  .d4 { transition-delay: .4s; }
+
+  /* ── PRODUCTS SECTION ─────────────────────────────────────────────────────── */
+  #products {
+    padding: 6rem 2.5rem;
+    background: linear-gradient(180deg, var(--surface) 0%, #101420 50%, var(--surface) 100%);
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .pcard {
+    background: var(--surface3);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 16px; padding: 2rem;
+    display: flex; flex-direction: column; gap: 1.2rem;
+    transition: all .3s ease; cursor: pointer; position: relative; overflow: hidden;
+  }
+  .pcard::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--brand), transparent);
+    opacity: 0; transition: opacity .3s;
+  }
+  .pcard:hover { border-color: rgba(0,212,255,.4); transform: translateY(-6px); box-shadow: 0 24px 48px rgba(0,0,0,.35), 0 0 48px rgba(0,212,255,.07); }
+  .pcard:hover::before { opacity: 1; }
+
+  .pcard-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pcard-icon {
+    width: 50px; height: 50px; border-radius: 13px;
+    background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.18);
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+  }
+  .pcard-sku {
+    font-family: 'Orbitron', monospace; font-size: .58rem; color: var(--muted);
+    letter-spacing: .06em; background: rgba(255,255,255,.04);
+    padding: .25rem .55rem; border-radius: 5px; border: 1px solid rgba(255,255,255,.07);
+  }
+  .pcard-name { font-family: 'Rajdhani', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text); }
+  .pcard-desc { font-size: .84rem; color: var(--muted); line-height: 1.65; flex: 1; }
+  .pcard-specs {
+    list-style: none; display: flex; flex-direction: column; gap: .3rem;
+    font-size: .8rem; color: var(--muted); padding: 0;
+  }
+  .pcard-specs li { display: flex; align-items: center; gap: .5rem; }
+  .pcard-specs li::before { content: '›'; color: var(--brand); font-weight: 700; flex-shrink: 0; }
+
+  .pcard-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,.07);
+  }
+  .pcard-price {
+    font-family: 'Orbitron', monospace; font-size: 1.35rem; font-weight: 900; color: var(--brand);
+  }
+  .pcard-price sup { font-size: .6em; vertical-align: super; opacity: .75; }
+  .pcard-cta {
+    background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.25);
+    color: var(--brand); padding: .42rem 1rem; border-radius: 8px;
+    font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .2s;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .3px;
+  }
+  .pcard-cta:hover { background: var(--brand); color: #000; }
+
+  /* ── TAIA SECTION ─────────────────────────────────────────────────────────── */
+  #taia { padding: 6rem 2.5rem; }
+
+  .taia-layout {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5rem; align-items: center; margin-top: 3rem;
+  }
+
+  .feature-list { display: flex; flex-direction: column; gap: 1.1rem; }
+  .fitem {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: var(--surface2); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 12px; padding: 1.25rem; transition: border-color .2s;
+  }
+  .fitem:hover { border-color: rgba(0,212,255,.28); }
+  .fitem-icon {
+    width: 42px; height: 42px; flex-shrink: 0; border-radius: 10px;
+    background: rgba(0,212,255,.1); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+  }
+  .fitem-text h4 { font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: .3rem; }
+  .fitem-text p { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+
+  /* Terminal visual */
+  .terminal {
+    background: var(--surface2); border: 1px solid rgba(0,212,255,.2);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,.45), 0 0 64px rgba(0,212,255,.04);
+  }
+  .term-bar {
+    background: var(--surface3); padding: .75rem 1.1rem;
+    display: flex; align-items: center; gap: .5rem;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .tdot { width: 10px; height: 10px; border-radius: 50%; }
+  .term-title { margin-left: .5rem; font-family: 'Orbitron', monospace; font-size: .6rem; color: var(--muted); letter-spacing: .06em; }
+  .term-body { padding: 1.5rem; font-family: 'Orbitron', monospace; font-size: .68rem; line-height: 1.9; }
+  .tl { display: flex; gap: .75rem; }
+  .tp { color: var(--brand); flex-shrink: 0; }
+  .tc { color: var(--text); }
+  .to { color: #6ee7b7; padding-left: 1.2rem; }
+  .tm { color: var(--muted); padding-left: 1.2rem; font-size: .62rem; }
+  .tcursor {
+    display: inline-block; width: 7px; height: 13px; background: var(--brand);
+    vertical-align: middle; animation: curblink .8s step-end infinite;
+  }
+  @keyframes curblink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── WHY NGS ──────────────────────────────────────────────────────────────── */
+  #why-ngs {
+    padding: 6rem 2.5rem;
+    background: var(--surface2);
+    border-top: 1px solid rgba(255,255,255,.05);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+
+  .why-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .wcard {
+    padding: 2rem; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.07);
+    background: var(--surface); position: relative; overflow: hidden;
+    transition: border-color .25s, transform .25s;
+  }
+  .wcard:hover { border-color: rgba(0,212,255,.3); transform: translateY(-4px); }
+  .wcard-num {
+    font-family: 'Orbitron', monospace; font-size: 3.5rem; font-weight: 900;
+    color: rgba(0,212,255,.07); position: absolute; top: .75rem; right: 1rem; line-height: 1;
+  }
+  .wcard-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+  .wcard-title { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+  .wcard-desc { font-size: .84rem; color: var(--muted); line-height: 1.7; }
+
+  /* ── STATS ────────────────────────────────────────────────────────────────── */
+  #stats {
+    padding: 5rem 2.5rem;
+    background: var(--surface);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .stats-grid {
+    max-width: 1000px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
+    text-align: center;
+  }
+  .scard {
+    padding: 2.25rem 1.5rem; background: var(--surface2);
+    border: 1px solid rgba(0,212,255,.12); border-radius: 16px;
+    transition: border-color .25s;
+  }
+  .scard:hover { border-color: rgba(0,212,255,.4); }
+  .sval {
+    font-family: 'Orbitron', monospace; font-size: 2.4rem;
+    font-weight: 900; color: var(--brand); display: block; margin-bottom: .5rem;
+  }
+  .slbl { font-size: .75rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+
+  /* ── USE CASES ────────────────────────────────────────────────────────────── */
+  #use-cases { padding: 6rem 2.5rem; }
+
+  .cases-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .case-card {
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.07);
+    background: var(--surface2);
+    transition: border-color .25s, transform .25s;
+    cursor: default;
+  }
+  .case-card:hover { border-color: rgba(0,212,255,.3); transform: translateY(-4px); }
+  .case-img {
+    height: 140px; display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    position: relative; overflow: hidden;
+  }
+  .case-img::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,212,255,.12), rgba(0,114,255,.08));
+  }
+  .case-img-inner { position: relative; z-index: 1; }
+  .case-body { padding: 1.5rem; }
+  .case-tag {
+    font-family: 'Orbitron', monospace; font-size: .58rem;
+    color: var(--brand); letter-spacing: .08em; text-transform: uppercase;
+    margin-bottom: .6rem;
+  }
+  .case-title { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+  .case-desc { font-size: .83rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── CTA SECTION ──────────────────────────────────────────────────────────── */
+  #contact {
+    padding: 8rem 2.5rem;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  #contact::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,212,255,.08) 0%, transparent 70%);
+  }
+  .cta-inner { max-width: 660px; margin: 0 auto; position: relative; z-index: 1; }
+  .cta-inner h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.7rem, 4vw, 2.8rem); font-weight: 900;
+    line-height: 1.2; margin-bottom: 1.1rem;
+  }
+  .cta-inner h2 em { font-style: normal; color: var(--brand); }
+  .cta-inner p { color: var(--muted); font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.8; }
+  .cta-chips { display: flex; flex-wrap: wrap; gap: .7rem; justify-content: center; margin-bottom: 2.5rem; }
+  .chip {
+    background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.2);
+    color: var(--brand); padding: .4rem .9rem; border-radius: 99px;
+    font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chip:hover { background: rgba(0,212,255,.18); transform: translateY(-1px); }
+
+  /* ── FOOTER ───────────────────────────────────────────────────────────────── */
+  footer {
+    background: var(--surface2); border-top: 1px solid rgba(255,255,255,.06);
+    padding: 2.5rem 2.5rem;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem;
+  }
+  .footer-logo {
+    font-family: 'Orbitron', monospace; font-size: .78rem; font-weight: 700;
+    color: var(--muted); letter-spacing: 2px;
+    display: flex; align-items: center; gap: .55rem;
+  }
+  .footer-logo span { color: var(--brand); }
+  .footer-links { display: flex; gap: 1.75rem; flex-wrap: wrap; }
+  .footer-links a { font-size: .8rem; color: var(--muted); text-decoration: none; transition: color .2s; }
+  .footer-links a:hover { color: var(--brand); }
+  .footer-copy { font-size: .73rem; color: rgba(136,136,170,.6); }
+
+  /* ── DIVIDER ──────────────────────────────────────────────────────────────── */
+  .sec-divider {
+    max-width: 1200px; margin: 0 auto;
+    height: 1px; background: linear-gradient(90deg, transparent, rgba(0,212,255,.15), transparent);
+  }
+
+  /* ── CHAT (preserved + enhanced) ─────────────────────────────────────────── */
+  #chat-btn {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--brand);
+    box-shadow: 0 4px 20px rgba(0,212,255,.4), 0 0 40px rgba(0,212,255,.12);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .2s, transform .2s;
+  }
+  #chat-btn:hover { background: var(--text); transform: scale(1.07); }
+  #chat-btn svg { width: 26px; height: 26px; fill: #000; }
+
+  #chat-panel {
+    position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 998;
+    width: min(var(--chat-w), calc(100vw - 3rem));
+    height: var(--chat-h);
+    background: var(--surface2); border: 1px solid rgba(0,212,255,.3);
+    border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    overflow: hidden; display: none; flex-direction: column;
+    transform: translateY(20px) scale(.97); opacity: 0;
+    transition: transform .25s, opacity .2s;
+  }
+  #chat-panel.open { display: flex; transform: translateY(0) scale(1); opacity: 1; }
+
+  .chat-header {
+    display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem;
+    background: var(--surface3); border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .chat-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--brand);
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+  }
+  .chat-header-info h4 { font-size: .9rem; color: #fff; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+  .chat-header-info span {
+    font-size: .72rem; color: var(--brand); display: flex; align-items: center; gap: .3rem;
+  }
+  .chat-header-info span::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--brand); display: inline-block; animation: blink 1.5s ease-in-out infinite;
+  }
+  .chat-actions { margin-left: auto; display: flex; gap: .5rem; }
+  .chat-header-btn {
+    background: none; border: 1px solid rgba(255,255,255,.1); border-radius: 4px;
+    color: var(--muted); cursor: pointer; font-size: .8rem; padding: .25rem .5rem; transition: all .2s;
+  }
+  .chat-header-btn:hover { background: rgba(255,255,255,.05); color: var(--text); border-color: rgba(255,255,255,.2); }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 1rem;
+    display: flex; flex-direction: column; gap: .75rem;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+  .msg { max-width: 85%; padding: .65rem .9rem; border-radius: 12px; font-size: .88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .msg.bot { background: var(--surface3); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.user { background: var(--brand); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg.bot strong { color: #fff; font-weight: 700; }
+
+  .chat-input-row {
+    display: flex; gap: .5rem; padding: .75rem 1rem;
+    border-top: 1px solid rgba(255,255,255,.07); background: var(--surface3);
+  }
+  #chat-input {
+    flex: 1; background: var(--surface); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px; padding: .6rem .9rem; color: var(--text); font-size: .88rem;
+    outline: none; resize: none; font-family: inherit;
+  }
+  #chat-input:focus { border-color: var(--brand); }
+  #chat-send {
+    background: var(--brand); border: none; border-radius: 8px; color: #000;
+    padding: .6rem .9rem; cursor: pointer; transition: background .2s;
+  }
+  #chat-send:hover { background: var(--text); }
+  #chat-send:disabled { opacity: .5; cursor: not-allowed; }
+  #chat-send svg { width: 18px; height: 18px; fill: #000; }
+
+  /* Chat interceptor: product cards */
+  .product-card-ui {
+    background: var(--surface2); border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 12px; padding: 1.25rem;
+    display: flex; flex-direction: column; gap: .75rem;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    box-shadow: 0 8px 20px rgba(0,0,0,.15); cursor: pointer;
+  }
+  .product-card-ui:hover { transform: translateY(-4px); border-color: var(--brand); box-shadow: 0 12px 28px rgba(0,212,255,.2); }
+  .pc-icon { background: rgba(0,212,255,.15); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .pc-price { color: var(--brand); font-weight: 800; font-size: 1.1rem; font-family: 'Orbitron', monospace; }
+  .pc-title { font-weight: 700; font-size: 1rem; color: var(--text); font-family: 'Rajdhani', sans-serif; }
+  .pc-desc { font-size: .8rem; color: var(--muted); flex: 1; }
+  .pc-stock { font-size: .75rem; color: var(--brand); font-weight: 700; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 6px; }
+
+  .tbl-wrap { overflow-x: auto; margin: .5rem 0; border-radius: 8px; }
+  .tbl-wrap table { border-collapse: collapse; width: 100%; font-size: .82em; }
+  .tbl-wrap th { background: rgba(0,212,255,.15); color: #fff; padding: .4rem .7rem; text-align: left; border-bottom: 1px solid rgba(0,212,255,.4); }
+  .tbl-wrap td { padding: .35rem .7rem; border-bottom: 1px solid rgba(255,255,255,.06); }
+
+  /* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .taia-layout { grid-template-columns: 1fr; gap: 3rem; }
+    .why-grid { grid-template-columns: 1fr 1fr; }
+    .cases-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    nav ul { display: none; }
+    .status-bar { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .why-grid { grid-template-columns: 1fr; }
+    .cases-grid { grid-template-columns: 1fr; }
+    .hero-kpis { gap: 1.5rem; }
+    footer { flex-direction: column; text-align: center; }
+    .footer-links { justify-content: center; }
+  }
+
+  /* ── TYPING INDICATOR ───────────────────────────────────────────────────── */
+  .typing-indicator {
+    display: flex; gap: 5px; padding: .6rem .2rem; align-items: center;
+  }
+  .typing-indicator span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--brand); opacity: .3;
+    animation: typeBounce 1.4s ease-in-out infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: .16s; }
+  .typing-indicator span:nth-child(3) { animation-delay: .32s; }
+  @keyframes typeBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: .3; }
+    30% { transform: translateY(-8px); opacity: 1; }
+  }
+
+  /* ── CODE BLOCKS ────────────────────────────────────────────────────────── */
+  .code-block {
+    background: var(--surface); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px; overflow: hidden; margin: .75rem 0;
+  }
+  .code-block-header {
+    background: var(--surface3); padding: .4rem .85rem;
+    font-family: 'Orbitron', monospace; font-size: .58rem;
+    color: var(--muted); letter-spacing: .06em;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    text-transform: uppercase;
+  }
+  .code-block-body {
+    padding: .85rem 1rem; margin: 0;
+    font-family: 'Orbitron', monospace; font-size: .72rem;
+    line-height: 1.85; overflow-x: auto; white-space: pre-wrap;
+    color: #c8d6e5;
+  }
+
+  /* ── INLINE CODE ────────────────────────────────────────────────────────── */
+  .inline-code {
+    background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.15);
+    padding: .1rem .38rem; border-radius: 4px; font-size: .85em;
+    color: var(--brand); font-family: 'Orbitron', monospace;
+  }
+
+  /* ── BLOCKQUOTE ─────────────────────────────────────────────────────────── */
+  .md-blockquote {
+    border-left: 3px solid var(--brand);
+    padding: .45rem .9rem; margin: .6rem 0;
+    color: var(--muted); font-size: .88rem;
+    background: rgba(0,212,255,.03); border-radius: 0 8px 8px 0;
+  }
+
+  /* ── LISTS ──────────────────────────────────────────────────────────────── */
+  .md-ul { margin: .5rem 0; padding-left: 1.2rem; }
+  .md-ul li { margin-bottom: .25rem; }
+  .md-ol { margin: .5rem 0; padding-left: 1.2rem; }
+  .md-ol li { margin-bottom: .25rem; }
+
+  /* ── HEADINGS ───────────────────────────────────────────────────────────── */
+  .md-h1 { font-family:'Rajdhani',sans-serif; font-size:1.15rem; font-weight:700; color:var(--text); margin:.85rem 0 .35rem; }
+  .md-h2 { font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); margin:.7rem 0 .3rem; }
+  .md-h3 { font-family:'Rajdhani',sans-serif; font-size:.95rem; font-weight:700; color:var(--text); margin:.6rem 0 .25rem; }
+
+  /* ── HR ─────────────────────────────────────────────────────────────────── */
+  .md-hr { height:1px; background:linear-gradient(90deg,transparent,rgba(0,212,255,.15),transparent); margin:.85rem 0; border:none; }
+</style>
+</head>
+<body>
+
+<!-- ─── STATUS BAR ──────────────────────────────────────────────────────────── -->
+<div class="status-bar">
+  <div class="status-item"><span class="sdot"></span> TAIA ONLINE</div>
+  <div class="status-item"><span class="sdot"></span> GRID NOMINAL</div>
+  <div class="status-item"><span class="sdot warn"></span> DEMO MODE</div>
+  <div style="margin-left:auto;color:var(--muted);" id="live-clock"></div>
+</div>
+
+<!-- ─── NAV ────────────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="#home" class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#00d4ff" stroke-width="2.5"/>
+      <path d="M7 12h10M12 7v10" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    NEXUS <span>GRID</span>
+  </a>
+  <ul>
+    <li><a href="#products">Products</a></li>
+    <li><a href="#taia">TAIA AI</a></li>
+    <li><a href="#why-ngs">Platform</a></li>
+    <li><a href="#use-cases">Use Cases</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#" class="nav-cta" onclick="openChat(); return false;">Access Terminal →</a>
+</nav>
+
+<!-- ─── HERO ────────────────────────────────────────────────────────────────── -->
+<section class="hero" id="home">
+  <div class="hero-content">
+    <div class="hero-badge">⚡ Enterprise IoT & Grid Automation</div>
+    <h1>Next-Gen <em>Smart Infrastructure</em><br>Powered by AI</h1>
+    <p class="hero-sub">TAIA, our enterprise AI sales assistant, is live and ready. Ask about products, check live inventory, get specs — or place your order through natural conversation.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="openChat()">Talk to TAIA →</button>
+      <a href="#products" class="btn-outline">View Products</a>
+    </div>
+    <div class="hero-kpis">
+      <div class="hero-kpi">
+        <span class="hero-kpi-val" data-count="4800">0</span>
+        <span class="hero-kpi-lbl">Devices Deployed</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-val" data-count="99.9" data-suffix="%">0</span>
+        <span class="hero-kpi-lbl">Grid Uptime</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-val" data-count="200" data-suffix="+">0</span>
+        <span class="hero-kpi-lbl">Enterprise Clients</span>
+      </div>
+      <div class="hero-kpi">
+        <span class="hero-kpi-val" data-count="24">0</span>
+        <span class="hero-kpi-lbl">Countries</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TICKER ──────────────────────────────────────────────────────────────── -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <span class="ti">VERTEX HUB PRO — IN STOCK</span>
+    <span class="ti">OMNI-LINK MESH NODE — AVAILABLE</span>
+    <span class="ti">SKYSTREAM ANALYTICS — CLOUD-READY</span>
+    <span class="ti">NEXUS CORE DEV-KIT — LIMITED UNITS</span>
+    <span class="ti">TAIA AGENT v2.1 — ONLINE</span>
+    <span class="ti">GRID MONITOR — ALL SYSTEMS NOMINAL</span>
+    <span class="ti">ENTERPRISE SUPPORT — 24/7 ACTIVE</span>
+    <!-- duplicate for infinite loop -->
+    <span class="ti">VERTEX HUB PRO — IN STOCK</span>
+    <span class="ti">OMNI-LINK MESH NODE — AVAILABLE</span>
+    <span class="ti">SKYSTREAM ANALYTICS — CLOUD-READY</span>
+    <span class="ti">NEXUS CORE DEV-KIT — LIMITED UNITS</span>
+    <span class="ti">TAIA AGENT v2.1 — ONLINE</span>
+    <span class="ti">GRID MONITOR — ALL SYSTEMS NOMINAL</span>
+    <span class="ti">ENTERPRISE SUPPORT — 24/7 ACTIVE</span>
+  </div>
+</div>
+
+<!-- ─── PRODUCTS ─────────────────────────────────────────────────────────────── -->
+<section id="products">
+  <div class="sec-inner">
+
+    <div class="rv">
+      <div class="sec-label">Product Catalog</div>
+      <h2 class="sec-title">NEXUS-Class <em>Infrastructure</em></h2>
+      <p class="sec-sub">Four flagship solutions engineered for enterprise-grade grid automation, analytics, and edge connectivity. Click any card to ask TAIA about it.</p>
+    </div>
+
+    <div class="products-grid">
+
+      <!-- Vertex Hub Pro -->
+      <div class="pcard rv d1" onclick="askAbout('Vertex Hub Pro')">
+        <div class="pcard-header">
+          <div class="pcard-icon">⚙️</div>
+          <div class="pcard-sku">NGS-VHP-01</div>
+        </div>
+        <div class="pcard-name">Vertex Hub Pro</div>
+        <div class="pcard-desc">The flagship central intelligence node for enterprise grid deployments. Supports up to 512 concurrent edge device connections with real-time telemetry aggregation and built-in AI scheduling.</div>
+        <ul class="pcard-specs">
+          <li>512 concurrent edge connections</li>
+          <li>10GbE + 4× SFP+ uplinks</li>
+          <li>AI-assisted load balancing</li>
+          <li>99.99% hardware uptime SLA</li>
+        </ul>
+        <div class="pcard-footer">
+          <div class="pcard-price">$1,450</div>
+          <button class="pcard-cta" onclick="event.stopPropagation(); askAbout('Vertex Hub Pro')">Ask TAIA →</button>
+        </div>
+      </div>
+
+      <!-- Omni-Link Mesh Node -->
+      <div class="pcard rv d2" onclick="askAbout('Omni-Link Mesh Node')">
+        <div class="pcard-header">
+          <div class="pcard-icon">🔗</div>
+          <div class="pcard-sku">NGS-OLN-05</div>
+        </div>
+        <div class="pcard-name">Omni-Link Mesh Node</div>
+        <div class="pcard-desc">Intelligent mesh networking node for dense IoT environments. Self-healing topology, multi-protocol bridging across Zigbee, Z-Wave, LoRa, and BLE. IP67-rated for field deployment.</div>
+        <ul class="pcard-specs">
+          <li>Multi-protocol: Zigbee / LoRa / BLE</li>
+          <li>Self-healing mesh topology</li>
+          <li>ARM Cortex-M7 edge processor</li>
+          <li>IP67 weatherproof enclosure</li>
+        </ul>
+        <div class="pcard-footer">
+          <div class="pcard-price">$320</div>
+          <button class="pcard-cta" onclick="event.stopPropagation(); askAbout('Omni-Link Mesh Node')">Ask TAIA →</button>
+        </div>
+      </div>
+
+      <!-- SkyStream Analytics -->
+      <div class="pcard rv d3" onclick="askAbout('SkyStream Analytics')">
+        <div class="pcard-header">
+          <div class="pcard-icon">📊</div>
+          <div class="pcard-sku">NGS-SSA-YR</div>
+        </div>
+        <div class="pcard-name">SkyStream Analytics</div>
+        <div class="pcard-desc">Cloud-native analytics platform for real-time grid intelligence. Ingest millions of events per second, visualize anomalies before they cascade, and generate AI-driven optimization reports.</div>
+        <ul class="pcard-specs">
+          <li>5M+ events/sec ingestion</li>
+          <li>ML anomaly detection engine</li>
+          <li>Custom dashboard builder</li>
+          <li>SOC 2 Type II certified</li>
+        </ul>
+        <div class="pcard-footer">
+          <div class="pcard-price">$899 <sup style="font-size:.6em;opacity:.7">/yr</sup></div>
+          <button class="pcard-cta" onclick="event.stopPropagation(); askAbout('SkyStream Analytics')">Ask TAIA →</button>
+        </div>
+      </div>
+
+      <!-- Nexus Core Dev-Kit -->
+      <div class="pcard rv d4" onclick="askAbout('Nexus Core Dev-Kit')">
+        <div class="pcard-header">
+          <div class="pcard-icon">🛠️</div>
+          <div class="pcard-sku">NGS-CDK-02</div>
+        </div>
+        <div class="pcard-name">Nexus Core Dev-Kit</div>
+        <div class="pcard-desc">The fastest path to building on the NGS platform. Includes a pre-flashed Vertex-class dev board, full SDK, 6-month SkyStream sandbox access, and priority developer support.</div>
+        <ul class="pcard-specs">
+          <li>Pre-flashed Vertex dev board</li>
+          <li>Full NGS SDK & documentation</li>
+          <li>6-month SkyStream sandbox</li>
+          <li>Priority dev support channel</li>
+        </ul>
+        <div class="pcard-footer">
+          <div class="pcard-price">$199</div>
+          <button class="pcard-cta" onclick="event.stopPropagation(); askAbout('Nexus Core Dev-Kit')">Ask TAIA →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-divider"></div>
+
+<!-- ─── TAIA SECTION ─────────────────────────────────────────────────────────── -->
+<section id="taia" class="sec">
+  <div class="sec-inner">
+    <div class="taia-layout">
+
+      <!-- Left: features -->
+      <div class="rv">
+        <div class="sec-label">AI Sales Intelligence</div>
+        <h2 class="sec-title">Meet <em>TAIA</em></h2>
+        <p class="sec-sub" style="margin-bottom:2rem;">TAIA is a purpose-built enterprise AI sales agent trained on NGS product data, live inventory, and order workflows. Ask anything — she responds with precision.</p>
+        <div class="feature-list">
+          <div class="fitem">
+            <div class="fitem-icon">🔍</div>
+            <div class="fitem-text">
+              <h4>Product Intelligence</h4>
+              <p>Ask for specs, comparisons, or recommendations. TAIA queries live product data to give accurate, real-time answers — not a static FAQ.</p>
+            </div>
+          </div>
+          <div class="fitem">
+            <div class="fitem-icon">📦</div>
+            <div class="fitem-text">
+              <h4>Live Inventory Awareness</h4>
+              <p>TAIA checks real-time stock levels before confirming orders, preventing overselling. Every response reflects current ERP state.</p>
+            </div>
+          </div>
+          <div class="fitem">
+            <div class="fitem-icon">🛒</div>
+            <div class="fitem-text">
+              <h4>Natural Language Orders</h4>
+              <p>Say "I need 3 Omni-Link nodes" and TAIA handles it — quantity validation, customer capture, confirmation, and order receipt.</p>
+            </div>
+          </div>
+          <div class="fitem">
+            <div class="fitem-icon">⚡</div>
+            <div class="fitem-text">
+              <h4>Technical Deep-Dives</h4>
+              <p>Integration questions, protocol compatibility, deployment sizing — TAIA routes complex technical queries to our specialist agent seamlessly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: terminal visual -->
+      <div class="terminal rv d2">
+        <div class="term-bar">
+          <div class="tdot" style="background:#ff5f57"></div>
+          <div class="tdot" style="background:#febc2e"></div>
+          <div class="tdot" style="background:#28c840"></div>
+          <span class="term-title">TAIA — SALES TERMINAL v2.1</span>
+        </div>
+        <div class="term-body">
+          <div class="tl"><span class="tp">NGS›</span><span class="tc">query inventory --all</span></div>
+          <div class="to">✓ 4 products synced from ERP</div>
+          <br>
+          <div class="tl"><span class="tp">NGS›</span><span class="tc">show "Vertex Hub Pro"</span></div>
+          <div class="to">SKU:   NGS-VHP-01</div>
+          <div class="to">Price: $1,450.00</div>
+          <div class="to">Stock: 47 units available</div>
+          <br>
+          <div class="tl"><span class="tp">NGS›</span><span class="tc">submit order --sku VHP-01 --qty 2</span></div>
+          <div class="to">✓ Order ORD-0042 confirmed</div>
+          <div class="tm">ERP updated — 45 units remaining</div>
+          <br>
+          <div class="tl"><span class="tp">NGS›</span><span class="tc">compare --mesh-deployment 50-nodes</span></div>
+          <div class="to">Recommendation: Omni-Link Mesh Node</div>
+          <div class="tm">Coverage: city-scale · Protocol: LoRa + Zigbee</div>
+          <br>
+          <div class="tl"><span class="tp">NGS›</span><span class="tc"><span class="tcursor"></span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-divider"></div>
+
+<!-- ─── WHY NGS ───────────────────────────────────────────────────────────────── -->
+<section id="why-ngs">
+  <div class="sec-inner">
+    <div class="rv" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Why Nexus Grid Systems</div>
+      <h2 class="sec-title" style="text-align:center;">Built for <em>Enterprise.</em> Proven at Scale.</h2>
+      <p class="sec-sub" style="margin:0 auto; text-align:center;">Every NGS product ships hardened for critical infrastructure — with the certifications, integrations, and SLAs that enterprise operations demand.</p>
+    </div>
+    <div class="why-grid">
+      <div class="wcard rv d1">
+        <div class="wcard-num">01</div>
+        <div class="wcard-icon">🔒</div>
+        <div class="wcard-title">Zero-Trust Security</div>
+        <div class="wcard-desc">Hardware-rooted trust, encrypted firmware, and mutual TLS on all devices. NGS conforms to NIST CSF and IEC 62443 industrial security standards out of the box.</div>
+      </div>
+      <div class="wcard rv d2">
+        <div class="wcard-num">02</div>
+        <div class="wcard-icon">⚡</div>
+        <div class="wcard-title">Sub-10ms Latency</div>
+        <div class="wcard-desc">Time-sensitive grid operations demand deterministic response. NGS edge nodes guarantee sub-10ms command latency in standard deployment configurations.</div>
+      </div>
+      <div class="wcard rv d3">
+        <div class="wcard-num">03</div>
+        <div class="wcard-icon">🔄</div>
+        <div class="wcard-title">Seamless Integration</div>
+        <div class="wcard-desc">REST APIs, MQTT, OPC-UA, and Modbus supported natively. NGS plugs into your existing SCADA, ERP, and cloud infrastructure without rip-and-replace.</div>
+      </div>
+      <div class="wcard rv d1">
+        <div class="wcard-num">04</div>
+        <div class="wcard-icon">📡</div>
+        <div class="wcard-title">Multi-Protocol Edge</div>
+        <div class="wcard-desc">From legacy serial to modern LoRaWAN, our mesh nodes speak every protocol your field devices use. One platform to rule any protocol stack.</div>
+      </div>
+      <div class="wcard rv d2">
+        <div class="wcard-num">05</div>
+        <div class="wcard-icon">☁️</div>
+        <div class="wcard-title">Hybrid Cloud-Edge</div>
+        <div class="wcard-desc">Run analytics at the edge, sync to cloud. SkyStream supports AWS, Azure, and GCP natively, with on-prem options for fully air-gapped environments.</div>
+      </div>
+      <div class="wcard rv d3">
+        <div class="wcard-num">06</div>
+        <div class="wcard-icon">🛡️</div>
+        <div class="wcard-title">Enterprise SLA</div>
+        <div class="wcard-desc">99.99% hardware uptime SLA. 24/7 NOC support, 4-hour hardware swap guarantee, and a dedicated customer success manager — included on all enterprise plans.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS ─────────────────────────────────────────────────────────────────── -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="scard rv">
+      <span class="sval" data-count="4800">0</span>
+      <span class="slbl">Devices Deployed</span>
+    </div>
+    <div class="scard rv d1">
+      <span class="sval" data-count="99.9" data-suffix="%">0</span>
+      <span class="slbl">Grid Uptime</span>
+    </div>
+    <div class="scard rv d2">
+      <span class="sval" data-count="200" data-suffix="+">0</span>
+      <span class="slbl">Enterprise Clients</span>
+    </div>
+    <div class="scard rv d3">
+      <span class="sval" data-count="24">0</span>
+      <span class="slbl">Countries Served</span>
+    </div>
+  </div>
+</section>
+
+<div class="sec-divider"></div>
+
+<!-- ─── USE CASES ─────────────────────────────────────────────────────────────── -->
+<section id="use-cases" class="sec">
+  <div class="sec-inner">
+    <div class="rv" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Deployment Scenarios</div>
+      <h2 class="sec-title" style="text-align:center;">Where NGS <em>Runs the Grid</em></h2>
+      <p class="sec-sub" style="margin:0 auto; text-align:center;">From smart city infrastructure to industrial edge deployments — the NGS platform adapts to critical environments at any scale.</p>
+    </div>
+    <div class="cases-grid" style="margin-top:3rem;">
+
+      <div class="case-card rv d1">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,114,255,.08));">
+          <div class="case-img-inner">🏙️</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Smart Cities</div>
+          <div class="case-title">Urban Grid Management</div>
+          <div class="case-desc">Omni-Link Mesh Nodes deployed across city blocks provide real-time traffic, utility, and environmental monitoring. Vertex Hub Pro aggregates telemetry for city-wide dashboards via SkyStream Analytics.</div>
+        </div>
+      </div>
+
+      <div class="case-card rv d2">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,200,100,.07));">
+          <div class="case-img-inner">🏭</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Industrial IoT</div>
+          <div class="case-title">Factory Floor Automation</div>
+          <div class="case-desc">Vertex Hub Pro serves as the central brain for production lines, integrating PLCs via Modbus and OPC-UA. SkyStream Analytics detects anomalies before they cause downtime — reducing unplanned stops by up to 40%.</div>
+        </div>
+      </div>
+
+      <div class="case-card rv d3">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(255,180,0,.07));">
+          <div class="case-img-inner">⚡</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Energy Sector</div>
+          <div class="case-title">Grid Monitoring & Control</div>
+          <div class="case-desc">Utilities deploy NGS hardware at substations and renewable generation sites for fault detection, load balancing, and SCADA integration. Millisecond-precision telemetry feeds into SkyStream for predictive maintenance.</div>
+        </div>
+      </div>
+
+      <div class="case-card rv d1">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(180,0,255,.06));">
+          <div class="case-img-inner">🚢</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Logistics & Ports</div>
+          <div class="case-title">Asset Tracking at Scale</div>
+          <div class="case-desc">Port operators use Omni-Link Mesh Nodes to track containers, vehicles, and equipment across massive facilities. LoRa long-range radio covers areas where cellular is impractical.</div>
+        </div>
+      </div>
+
+      <div class="case-card rv d2">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,200,200,.07));">
+          <div class="case-img-inner">🏗️</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Construction</div>
+          <div class="case-title">Site Safety & Monitoring</div>
+          <div class="case-desc">Temporary mesh networks deployed on construction sites monitor structural sensors, worker safety wearables, and environmental conditions in real time — with zero cabling required.</div>
+        </div>
+      </div>
+
+      <div class="case-card rv d3">
+        <div class="case-img" style="background: linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,100,255,.1));">
+          <div class="case-img-inner">💻</div>
+        </div>
+        <div class="case-body">
+          <div class="case-tag">Developers</div>
+          <div class="case-title">Rapid Prototyping with Dev-Kit</div>
+          <div class="case-desc">The Nexus Core Dev-Kit gets engineers from zero to running proof-of-concept in hours. Full SDK, sandbox SkyStream access, and a pre-flashed dev board eliminate infrastructure setup entirely.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-divider"></div>
+
+<!-- ─── CTA ───────────────────────────────────────────────────────────────────── -->
+<section id="contact">
+  <div class="cta-inner rv">
+    <h2>Ready to Deploy the <em>Future</em>?</h2>
+    <p>Talk to TAIA now. Ask about pricing, request a quote, compare products, or place your order — all through AI-powered conversation. No forms. No waiting.</p>
+    <div class="cta-chips">
+      <span class="chip" onclick="chipSend('What products do you offer?')">What products do you offer?</span>
+      <span class="chip" onclick="chipSend('Compare Vertex Hub Pro vs Omni-Link Mesh Node')">Compare products</span>
+      <span class="chip" onclick="chipSend('I need a quote for 10 Omni-Link mesh nodes')">Get a bulk quote</span>
+      <span class="chip" onclick="chipSend('What are the specs of SkyStream Analytics?')">SkyStream specs</span>
+      <span class="chip" onclick="chipSend('I want to order a Nexus Core Dev-Kit')">Order Dev-Kit now</span>
+      <span class="chip" onclick="chipSend('Which product should I start with for a smart city deployment?')">Deployment advice</span>
+    </div>
+    <button class="btn-primary" onclick="openChat()">Launch TAIA Terminal →</button>
+  </div>
+</section>
+
+<!-- ─── FOOTER ────────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="2" width="20" height="20" rx="4" stroke="#00d4ff" stroke-width="2.5"/>
+      <path d="M7 12h10M12 7v10" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    NEXUS <span>GRID</span> SYSTEMS
+  </div>
+  <div class="footer-links">
+    <a href="#products">Products</a>
+    <a href="#taia">TAIA AI</a>
+    <a href="#why-ngs">Platform</a>
+    <a href="#use-cases">Use Cases</a>
+    <a href="#" onclick="openChat(); return false;">Terminal</a>
+  </div>
+  <div class="footer-copy">© 2025 Nexus Grid Systems · Enterprise AI Demo</div>
+</footer>
+
+<!-- ─── CHAT BUTTON ───────────────────────────────────────────────────────────── -->
+<button id="chat-btn" onclick="toggleChat()">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+</button>
+
+<!-- ─── CHAT PANEL ─────────────────────────────────────────────────────────────── -->
+<div id="chat-panel">
+  <div class="chat-header">
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-header-info">
+      <h4>TAIA — Sales Assistant</h4>
+      <span>System Online</span>
+    </div>
+    <div class="chat-actions">
+      <button class="chat-header-btn" onclick="resetChat()">↺ Reset</button>
+      <button class="chat-header-btn" onclick="toggleChat()">✕</button>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-row">
+    <textarea id="chat-input" rows="1" placeholder="Ask about products, pricing, or place an order..." onkeydown="handleKey(event)"></textarea>
+    <button id="chat-send" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+var LIBRECHAT_URL = "http://localhost:3080";
+var AGENT_ID      = "agent_KBtGIuJkC96Drsjiw-QSR";
+var API_KEY       = "sk-7de36a986dd661c46f053d3c2e0fc3e334474716f7890435ee0bba4b31ab1210";
+
+var MIN_INDICATOR_MS = 1200;   // typing dots stay at least this long
+var MIN_TYPE_MS      = 1800;   // typewriter takes at least this long total
+var WORD_DELAY       = 30;     // base ms per word in paragraphs
+var LIST_DELAY       = 90;     // base ms per list item
+var BLOCK_PAUSE      = 120;    // ms pause after instant blocks
+// ─────────────────────────────────────────────────────────────────────────────
+
+var isOpen = false, isSending = false, messages = [];
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+(function clockTick() {
+  var el = document.getElementById("live-clock");
+  if (el) el.textContent = new Date().toUTCString().replace("GMT", "UTC");
+  setTimeout(clockTick, 1000);
+})();
+
+// ── CHAT TOGGLE ───────────────────────────────────────────────────────────────
+function toggleChat() {
+  isOpen = !isOpen;
+  var panel = document.getElementById("chat-panel");
+  if (isOpen) {
+    panel.classList.add("open");
+    if (!document.getElementById("chat-messages").children.length) {
+      addMessage("bot", "Hello! I'm **TAIA**, the Nexus Grid Systems AI sales assistant.\n\nI can help you explore our product catalog, check live inventory, compare specs, get a quote, or place an order. What can I help you with today?");
+    }
+    setTimeout(function() { document.getElementById("chat-input").focus(); }, 300);
+  } else {
+    panel.classList.remove("open");
+  }
+}
+function openChat() { if (!isOpen) toggleChat(); }
+
+function resetChat() {
+  messages = [];
+  document.getElementById("chat-messages").innerHTML = "";
+  addMessage("bot", "Terminal reset. How can I assist you?");
+}
+
+// ── PRODUCT HELPERS ────────────────────────────────────────────────────────────
+function askAbout(productName) {
+  openChat();
+  setTimeout(function() {
+    var inp = document.getElementById("chat-input");
+    inp.value = "Tell me about the " + productName + " \u2014 specs, pricing, and availability.";
+    inp.focus();
+  }, 380);
+}
+
+function selectProduct(productName) {
+  openChat();
+  setTimeout(function() {
+    var inp = document.getElementById("chat-input");
+    inp.value = "I want to order the " + productName + ". Qty: ";
+    inp.focus();
+  }, 380);
+}
+
+function chipSend(text) {
+  openChat();
+  setTimeout(function() {
+    document.getElementById("chat-input").value = text;
+    sendMessage();
+  }, 420);
+}
+
+// ── SCROLL REVEAL ──────────────────────────────────────────────────────────────
+var rvObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add("on"); rvObs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll(".rv").forEach(function(el) { rvObs.observe(el); });
+
+// ── ANIMATED COUNTERS ──────────────────────────────────────────────────────────
+function animateCount(el) {
+  var raw = el.dataset.count, target = parseFloat(raw);
+  var suffix = el.dataset.suffix || "", dec = raw.indexOf(".") !== -1, dur = 1800, t0 = performance.now();
+  (function tick(now) {
+    var p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3), val = target * e;
+    el.textContent = (dec ? val.toFixed(1) : Math.floor(val).toLocaleString()) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = (dec ? target.toFixed(1) : target.toLocaleString()) + suffix;
+  })(t0);
+}
+var cntObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting && e.target.dataset.count !== undefined) { animateCount(e.target); cntObs.unobserve(e.target); }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll("[data-count]").forEach(function(el) { cntObs.observe(el); });
+
+// ── CURRENCY NORMALIZATION ─────────────────────────────────────────────────────
+function normalizeCurrency(text) {
+  return text.replace(/\u20B1/g, "$").replace(/\bPHP\b/gi, "USD").replace(/\bpesos?\b/gi, "dollars");
+}
+
+// ── SCROLL HELPER ─────────────────────────────────────────────────────────────
+function scrollChat() {
+  var w = document.getElementById("chat-messages");
+  w.scrollTop = w.scrollHeight;
+}
+
+// ── RENDER HELPERS ─────────────────────────────────────────────────────────────
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function inlineFormat(s) {
+  var out = escapeHtml(s);
+  out = out.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+  out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  return out;
+}
+
+function renderLight(text) {
+  return inlineFormat(text).replace(/\n/g, "<br>");
+}
+
+function renderMarkdown(text) {
+  if (!text) return "";
+  text = text.replace(/\r\n/g, "\n");
+  var lines = text.split("\n");
+  var out = [];
+  var i = 0;
+
+  while (i < lines.length) {
+    var line = lines[i];
+
+    if (line.trim().indexOf("```") === 0) {
+      var lang = line.trim().slice(3).trim();
+      var codeLines = [];
+      i++;
+      while (i < lines.length && lines[i].trim().indexOf("```") !== 0) { codeLines.push(lines[i]); i++; }
+      if (i < lines.length) i++;
+      out.push('<div class="code-block"><div class="code-block-header">' + (lang || "output") + '</div><pre class="code-block-body">' + escapeHtml(codeLines.join("\n")) + '</pre></div>');
+      continue;
+    }
+
+    if (line.indexOf("|") !== -1 && i + 1 < lines.length && /^\s*\|?[\s\-|:]+\|/.test(lines[i + 1])) {
+      var tl = [line]; i++; tl.push(lines[i]); i++;
+      while (i < lines.length && lines[i].indexOf("|") !== -1) { tl.push(lines[i]); i++; }
+      out.push(buildTable(tl));
+      continue;
+    }
+
+    var hMatch = line.match(/^(#{1,3})\s+(.+)/);
+    if (hMatch) {
+      out.push('<div class="md-h' + hMatch[1].length + '">' + inlineFormat(hMatch[2]) + '</div>');
+      i++; continue;
+    }
+
+    if (/^[\-\*]{3,}\s*$/.test(line.trim())) {
+      out.push('<hr class="md-hr">');
+      i++; continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      var items = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) { items.push(inlineFormat(lines[i].replace(/^>\s?/, ""))); i++; }
+      out.push('<div class="md-blockquote">' + items.join("<br>") + '</div>');
+      continue;
+    }
+
+    if (/^[\-\*]\s/.test(line)) {
+      var ulItems = [];
+      while (i < lines.length && /^[\-\*]\s/.test(lines[i])) { ulItems.push("<li>" + inlineFormat(lines[i].replace(/^[\-\*]\s/, "")) + "</li>"); i++; }
+      out.push('<ul class="md-ul">' + ulItems.join("") + '</ul>');
+      continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      var olItems = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) { olItems.push("<li>" + inlineFormat(lines[i].replace(/^\d+\.\s/, "")) + "</li>"); i++; }
+      out.push('<ol class="md-ol">' + olItems.join("") + '</ol>');
+      continue;
+    }
+
+    if (line.trim() === "") { out.push("<br>"); i++; continue; }
+
+    out.push("<span>" + inlineFormat(line) + "</span><br>");
+    i++;
+  }
+
+  var html = out.join("");
+  html = html.replace(/(Order\s*#\s*\d+|ORD-\d+)/gi, function(m) {
+    return '<span style="display:inline-flex;align-items:center;gap:.3rem;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:#000;padding:.15rem .5rem;border-radius:6px;font-size:.85em;font-weight:700;vertical-align:baseline;white-space:nowrap;margin:0 .15rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + m + '</span>';
+  });
+  return html;
+}
+
+function buildTable(lines) {
+  function parseRow(l) { return l.replace(/^\|/, "").replace(/\|$/, "").split("|").map(function(c) { return c.trim(); }); }
+  var headers = parseRow(lines[0]);
+  var rows = lines.slice(2).map(parseRow);
+  var hStr = headers.join(" ").toLowerCase();
+
+  if (hStr.indexOf("price") !== -1 && (hStr.indexOf("name") !== -1 || hStr.indexOf("product") !== -1)) {
+    var nameIdx = -1, priceIdx = -1, descIdx = -1, stockIdx = -1;
+    for (var hi = 0; hi < headers.length; hi++) {
+      var h = headers[hi].toLowerCase();
+      if (h.indexOf("name") !== -1 || h.indexOf("product") !== -1) nameIdx = hi;
+      if (h.indexOf("price") !== -1) priceIdx = hi;
+      if (h.indexOf("desc") !== -1) descIdx = hi;
+      if (h.indexOf("stock") !== -1 || h.indexOf("qty") !== -1) stockIdx = hi;
+    }
+    var cards = rows.map(function(r) {
+      var name = nameIdx >= 0 ? r[nameIdx] : "Nexus Product";
+      var price = priceIdx >= 0 ? normalizeCurrency(r[priceIdx]) : "";
+      var desc = descIdx >= 0 ? r[descIdx] : "Smart Infrastructure Solution";
+      var rawStock = stockIdx >= 0 ? r[stockIdx] : "Available";
+      var stockMatch = rawStock.match(/[\d,]+/);
+      var stockDisp = stockMatch ? stockMatch[0] + " Units" : "Available";
+      var icon = "\uD83D\uDCE6";
+      if (name.toLowerCase().indexOf("hub") !== -1) icon = "\u2699\uFE0F";
+      if (name.toLowerCase().indexOf("node") !== -1 || name.toLowerCase().indexOf("link") !== -1) icon = "\uD83D\uDD17";
+      if (name.toLowerCase().indexOf("analytics") !== -1 || name.toLowerCase().indexOf("stream") !== -1) icon = "\uD83D\uDCCA";
+      if (name.toLowerCase().indexOf("kit") !== -1 || name.toLowerCase().indexOf("dev") !== -1) icon = "\uD83D\uDEE0\uFE0F";
+      var safe = name.replace(/'/g, "\\'");
+      return '<div class="product-card-ui" onclick="selectProduct(\'' + safe + '\')">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div class="pc-icon">' + icon + '</div><div class="pc-price">' + price + '</div></div>' +
+        '<div class="pc-title">' + inlineFormat(name) + '</div>' +
+        '<div class="pc-desc">' + inlineFormat(desc) + '</div>' +
+        '<div class="pc-stock"><svg width="14" height="14" style="flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span style="white-space:nowrap">In Stock: ' + stockDisp + '</span></div></div>';
+    }).join("");
+    return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1rem 0">' + cards + '</div>';
+  }
+
+  var thead = "<thead><tr>" + headers.map(function(h) { return "<th>" + inlineFormat(h) + "</th>"; }).join("") + "</tr></thead>";
+  var tbody = "<tbody>" + rows.map(function(r) { return "<tr>" + r.map(function(c) { return "<td>" + inlineFormat(normalizeCurrency(c)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody>";
+  return '<div class="tbl-wrap"><table>' + thead + tbody + '</table></div>';
+}
+
+// ── MESSAGE MANAGEMENT ─────────────────────────────────────────────────────────
+function addMessage(role, text) {
+  var wrap = document.getElementById("chat-messages");
+  var div = document.createElement("div");
+  div.className = "msg " + role;
+  if (role === "bot") div.innerHTML = renderMarkdown(normalizeCurrency(text));
+  else div.textContent = text;
+  wrap.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function showTypingIndicator() {
+  var wrap = document.getElementById("chat-messages");
+  var div = document.createElement("div");
+  div.className = "msg bot";
+  div.id = "typing-indicator";
+  div.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+  wrap.appendChild(div);
+  scrollChat();
+}
+
+function removeTypingIndicator() {
+  var el = document.getElementById("typing-indicator");
+  if (el) el.remove();
+}
+
+function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+// ── PARSE RESPONSE — handles both SSE and JSON ────────────────────────────────
+function parseResponse(rawBody) {
+  // Try SSE format
+  if (rawBody.indexOf("data: ") !== -1) {
+    var content = "";
+    var lines = rawBody.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf("data: ") !== 0) continue;
+      var raw = line.slice(6).trim();
+      if (!raw || raw === "[DONE]") continue;
+      try {
+        var j = JSON.parse(raw);
+        if (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) {
+          content += j.choices[0].delta.content;
+        }
+      } catch (e) {}
+    }
+    if (content) return content;
+  }
+  // Try JSON format
+  try {
+    var json = JSON.parse(rawBody);
+    if (json.choices && json.choices[0] && json.choices[0].message) {
+      return json.choices[0].message.content || "";
+    }
+  } catch (e) {}
+  return "";
+}
+
+// ── BLOCK PARSER — splits text into typable blocks ────────────────────────────
+function parseBlocks(text) {
+  var blocks = [];
+  var lines = text.split("\n");
+  var i = 0;
+
+  while (i < lines.length) {
+    var line = lines[i];
+
+    // Code block → instant
+    if (line.trim().indexOf("```") === 0) {
+      var cl = []; i++;
+      while (i < lines.length && lines[i].trim().indexOf("```") !== 0) { cl.push(lines[i]); i++; }
+      if (i < lines.length) i++;
+      blocks.push({ type: "instant", text: "```\n" + cl.join("\n") + "\n```" });
+      continue;
+    }
+
+    // Table → instant
+    if (line.indexOf("|") !== -1 && i + 1 < lines.length && /^\s*\|?[\s\-|:]+\|/.test(lines[i + 1])) {
+      var tl = [line]; i++; tl.push(lines[i]); i++;
+      while (i < lines.length && lines[i].indexOf("|") !== -1) { tl.push(lines[i]); i++; }
+      blocks.push({ type: "instant", text: tl.join("\n") });
+      continue;
+    }
+
+    // Heading → instant
+    if (/^#{1,3}\s/.test(line)) { blocks.push({ type: "instant", text: line }); i++; continue; }
+
+    // HR → instant
+    if (/^[\-\*]{3,}\s*$/.test(line.trim())) { blocks.push({ type: "instant", text: line }); i++; continue; }
+
+    // Blockquote → instant
+    if (/^>\s?/.test(line)) {
+      var bq = []; while (i < lines.length && /^>\s?/.test(lines[i])) { bq.push(lines[i]); i++; }
+      blocks.push({ type: "instant", text: bq.join("\n") });
+      continue;
+    }
+
+    // Unordered list → item by item
+    if (/^[\-\*]\s/.test(line)) {
+      var ulItems = []; while (i < lines.length && /^[\-\*]\s/.test(lines[i])) { ulItems.push(lines[i]); i++; }
+      blocks.push({ type: "list", items: ulItems });
+      continue;
+    }
+
+    // Ordered list → item by item
+    if (/^\d+\.\s/.test(line)) {
+      var olItems = []; while (i < lines.length && /^\d+\.\s/.test(lines[i])) { olItems.push(lines[i]); i++; }
+      blocks.push({ type: "list", items: olItems });
+      continue;
+    }
+
+    // Empty → skip
+    if (line.trim() === "") { blocks.push({ type: "empty" }); i++; continue; }
+
+    // Paragraph → collect consecutive plain lines, type word by word
+    var para = [];
+    while (i < lines.length) {
+      var cl2 = lines[i];
+      if (cl2.trim() === "" || cl2.trim().indexOf("```") === 0 || /^[\-\*]\s/.test(cl2) || /^\d+\.\s/.test(cl2) || /^#{1,3}\s/.test(cl2) || /^>\s?/.test(cl2) || /^[\-\*]{3,}\s*$/.test(cl2.trim())) break;
+      if (cl2.indexOf("|") !== -1 && i + 1 < lines.length && /^\s*\|?[\s\-|:]+\|/.test(lines[i + 1])) break;
+      para.push(cl2); i++;
+    }
+    if (para.length) blocks.push({ type: "paragraph", text: para.join("\n") });
+  }
+  return blocks;
+}
+
+// ── TYPEWRITER — block-aware, adaptive speed ──────────────────────────────────
+function typewriterFull(text, msgDiv) {
+  return new Promise(function(resolve) {
+    var blocks = parseBlocks(text);
+
+    // Calculate natural duration
+    var naturalMs = 0;
+    for (var b = 0; b < blocks.length; b++) {
+      if (blocks[b].type === "paragraph") naturalMs += blocks[b].text.split(/\s+/).length * WORD_DELAY;
+      else if (blocks[b].type === "list") naturalMs += blocks[b].items.length * LIST_DELAY;
+      else if (blocks[b].type === "instant") naturalMs += BLOCK_PAUSE;
+    }
+
+    // Scale up if natural duration is below minimum
+    var scale = naturalMs > 0 ? Math.max(1, MIN_TYPE_MS / naturalMs) : 1;
+    var wDelay = Math.round(WORD_DELAY * scale);
+    var lDelay = Math.round(LIST_DELAY * scale);
+    var bDelay = Math.round(BLOCK_PAUSE * scale);
+
+    var blockIdx = 0, subIdx = 0, accumulated = "";
+
+    function play() {
+      if (blockIdx >= blocks.length) {
+        msgDiv.innerHTML = renderMarkdown(text);
+        scrollChat();
+        resolve();
+        return;
+      }
+
+      var block = blocks[blockIdx];
+
+      if (block.type === "instant") {
+        accumulated += block.text + "\n";
+        msgDiv.innerHTML = renderMarkdown(accumulated);
+        scrollChat();
+        blockIdx++;
+        setTimeout(play, bDelay);
+
+      } else if (block.type === "empty") {
+        accumulated += "\n";
+        blockIdx++;
+        play();
+
+      } else if (block.type === "list") {
+        if (subIdx < block.items.length) {
+          accumulated += block.items[subIdx] + "\n";
+          msgDiv.innerHTML = renderMarkdown(accumulated);
+          scrollChat();
+          subIdx++;
+          setTimeout(play, lDelay);
+        } else {
+          subIdx = 0;
+          blockIdx++;
+          play();
+        }
+
+      } else if (block.type === "paragraph") {
+        var words = block.text.split(/(\s+)/);
+        if (subIdx < words.length) {
+          accumulated += words[subIdx];
+          subIdx++;
+          msgDiv.innerHTML = renderLight(accumulated);
+          scrollChat();
+          setTimeout(play, wDelay);
+        } else {
+          // Paragraph done — full markdown render for proper formatting
+          msgDiv.innerHTML = renderMarkdown(accumulated);
+          scrollChat();
+          subIdx = 0;
+          blockIdx++;
+          setTimeout(play, 50);
+        }
+      }
+    }
+
+    play();
+  });
+}
+
+// ── SEND ───────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  if (isSending) return;
+  var inp = document.getElementById("chat-input");
+  var text = inp.value.trim();
+  if (!text) return;
+
+  messages.push({ role: "user", content: text });
+  inp.value = "";
+  addMessage("user", text);
+  isSending = true;
+  document.getElementById("chat-send").disabled = true;
+
+  // Phase 1: typing indicator (guaranteed minimum duration)
+  showTypingIndicator();
+  var t0 = Date.now();
+
+  try {
+    // Phase 2: fetch — this may resolve fast or slow
+    var res = await fetch(LIBRECHAT_URL + "/api/agents/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + API_KEY
+      },
+      body: JSON.stringify({ model: AGENT_ID, messages: messages, stream: true })
+    });
+
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    // Read the entire response body
+    var rawBody = await res.text();
+
+    // Phase 3: enforce minimum indicator time BEFORE showing any text
+    var elapsed = Date.now() - t0;
+    if (elapsed < MIN_INDICATOR_MS) {
+      await sleep(MIN_INDICATOR_MS - elapsed);
+    }
+
+    // Parse the response (handles both SSE and JSON)
+    var reply = normalizeCurrency(parseResponse(rawBody));
+
+    if (!reply) {
+      removeTypingIndicator();
+      addMessage("bot", "\u26A0 No response received. Please try again.");
+      messages.pop();
+      return;
+    }
+
+    // Phase 4: swap indicator for typewriter — no blank bubble gap
+    removeTypingIndicator();
+    var msgDiv = document.createElement("div");
+    msgDiv.className = "msg bot";
+    document.getElementById("chat-messages").appendChild(msgDiv);
+
+    // Phase 5: typewriter with adaptive timing
+    await typewriterFull(reply, msgDiv);
+
+    messages.push({ role: "assistant", content: reply });
+
+  } catch (e) {
+    // On error, ensure indicator is removed and show error
+    var errElapsed = Date.now() - t0;
+    if (errElapsed < 600) await sleep(600 - errElapsed);
+    removeTypingIndicator();
+    addMessage("bot", "\u26A0 Connection error. Ensure the NGS terminal is online.");
+    messages.pop();
+  } finally {
+    isSending = false;
+    document.getElementById("chat-send").disabled = false;
+    inp.focus();
+  }
+}
+</script>
+</body>
+</html>
