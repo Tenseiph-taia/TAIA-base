@@ -179,20 +179,20 @@ registration:
 # Note: If balance.enabled is true, transactions will always be enabled
 # regardless of this setting to ensure balance tracking works correctly
 
-# speech:
-#   tts:
-#     openai:
-#       url: ''
-#       apiKey: '${TTS_API_KEY}'
-#       model: ''
-#       voices: ['']
+speech:
+  tts:
+    openai:
+      url: 'http://whisper:8000/v1/audio/speech'
+      apiKey: '${TTS_API_KEY}'
+      model: 'semioniy/piper-en_US-megumin-medium'
+      voices: ['megumin']
 
-#
-#   stt:
-#     openai:
-#       url: ''
-#       apiKey: '${STT_API_KEY}'
-#       model: ''
+
+  stt:
+    openai:
+      url: 'http://whisper:8000/v1/audio/transcriptions'
+      apiKey: '${STT_API_KEY}'
+      model: 'Systran/faster-distil-whisper-small.en'
 
 # rateLimits:
 #   fileUploads:

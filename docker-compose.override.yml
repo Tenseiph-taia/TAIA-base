@@ -46,6 +46,18 @@ services:
       - EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
 
+  # Whisper
+  whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    container_name: local-whisper
+    environment:
+      - HF_HOME=/models 
+    volumes:
+      # Saves the model permanently so it never downloads twice
+      - ./data/speaches/models:/models
+    ports:
+      - "8000:8000"
+    restart: always
 # # LOCAL BUILD
 #   api:
 #     image: librechat
