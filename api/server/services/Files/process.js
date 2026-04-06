@@ -514,10 +514,10 @@ const processAgentFileUpload = async ({ req, res, metadata }) => {
     const existingAgent = await getAgent({ id: agent_id });
     const existingFileIds = existingAgent?.tool_resources?.file_search?.file_ids ?? [];
     if (existingFileIds.length > 0) {
-      const existingFiles = await getFiles({
-        file_id: { $in: existingFileIds },
-        filename: sanitizeFilename(file.originalname),
-      });
+      
+      
+      
+      
       
       const allExistingFiles = await getFiles({ file_id: { $in: existingFileIds } });
       const isDuplicate = allExistingFiles.some(
