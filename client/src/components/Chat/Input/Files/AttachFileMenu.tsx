@@ -81,9 +81,12 @@ const AttachFileMenu = ({
     ephemeralAgentByConvoId(conversationId),
   );
   const [toolResource, setToolResource] = useState<EToolResources | undefined>();
-  const { handleFileChange } = useFileHandling();
+  const { handleFileChange } = useFileHandlingNoChatContext(
+    undefined,
+    { files, setFiles, setFilesLoading, conversation },
+  );
   // Agent file search handling — passes agent_id so file attaches to agent permanently
-  const { handleFileChange: handleAgentFileChange } = useFileHandling(
+  const { handleFileChange: handleAgentFileChange } = useFileHandlingNoChatContext(
     agentId
       ? {
           additionalMetadata: {
@@ -91,10 +94,9 @@ const AttachFileMenu = ({
           },
         }
       : undefined,
+    { files, setFiles, setFilesLoading, conversation },
   );
-  const { handleSharePointFiles, isProcessing, downloadProgress } = useSharePointFileHandling({
-    toolResource,
-  });
+
   const { handleSharePointFiles, isProcessing, downloadProgress } =
     useSharePointFileHandlingNoChatContext(
       { toolResource },
