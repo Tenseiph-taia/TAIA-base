@@ -34,6 +34,7 @@ const initializeMCPs = require('./services/initializeMCPs');
 const configureSocialLogins = require('./socialLogins');
 const { getAppConfig } = require('./services/Config');
 const staticCache = require('./utils/staticCache');
+const optionalJwtAuth = require('./middleware/optionalJwtAuth');
 const noIndex = require('./middleware/noIndex');
 const routes = require('./routes');
 
@@ -154,8 +155,10 @@ const startServer = async () => {
   app.use('/api/auth', preAuthTenantMiddleware, routes.auth);
   app.use('/api/admin', routes.adminAuth);
   app.use('/api/admin/config', routes.adminConfig);
+  app.use('/api/admin/grants', routes.adminGrants);
   app.use('/api/admin/groups', routes.adminGroups);
   app.use('/api/admin/roles', routes.adminRoles);
+  app.use('/api/admin/users', routes.adminUsers);
   app.use('/api/actions', routes.actions);
   app.use('/api/keys', routes.keys);
   app.use('/api/api-keys', routes.apiKeys);
@@ -169,7 +172,7 @@ const startServer = async () => {
   app.use('/api/endpoints', routes.endpoints);
   app.use('/api/balance', routes.balance);
   app.use('/api/models', routes.models);
-  app.use('/api/config', preAuthTenantMiddleware, routes.config);
+  app.use('/api/config', preAuthTenantMiddleware, optionalJwtAuth, routes.config);
   app.use('/api/assistants', routes.assistants);
   app.use('/api/files', await routes.files.initialize());
   app.use('/images/', createValidateImageRequest(appConfig.secureImageLinks), routes.staticRoute);

@@ -16,6 +16,8 @@ import DialogManager from './DialogManager';
 import { useLocalize } from '~/hooks';
 import { useAuthContext } from '~/hooks/AuthContext';
 
+const defaultInterface = getConfigDefaults().interface;
+
 function ModelSelectorContent() {
   const localize = useLocalize();
 
@@ -170,7 +172,7 @@ function ModelSelectorContent() {
 }
 
 export default function ModelSelector({ startupConfig }: ModelSelectorProps) {
-  const interfaceConfig = startupConfig?.interface ?? getConfigDefaults().interface;
+  const interfaceConfig = startupConfig?.interface ?? defaultInterface;
   const modelSpecs = startupConfig?.modelSpecs?.list ?? [];
 
   if (interfaceConfig.modelSelect === false && modelSpecs.length === 0) {
