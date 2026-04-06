@@ -510,6 +510,32 @@ const processAgentFileUpload = async ({ req, res, metadata }) => {
     if (!isFileSearchEnabled) {
       throw new Error('File search is not enabled for Agents');
     }
+
+    const existingAgent = await getAgent({ id: agent_id });
+    const existingFileIds = existingAgent?.tool_resources?.file_search?.file_ids ?? [];
+    if (existingFileIds.length > 0) {
+      
+      
+      
+      
+      
+      const allExistingFiles = await getFiles({ file_id: { $in: existingFileIds } });
+      const isDuplicate = allExistingFiles.some(
+        f => sanitizeFilename(f.filename) === sanitizeFilename(file.originalname)
+      );
+
+      if (isDuplicate) {
+        const existing = allExistingFiles.find(
+          f => sanitizeFilename(f.filename) === sanitizeFilename(file.originalname)
+        );
+        return res.status(200).json({
+          message: 'File already exists on this agent',
+          ...existing,
+          temp_file_id: temp_file_id ?? file_id,
+          isDuplicate: true,
+        });
+      }
+    }
     // Note: File search processing continues to dual storage logic below
   } else if (tool_resource === EToolResources.context) {
     const { file_id, temp_file_id = null } = metadata;

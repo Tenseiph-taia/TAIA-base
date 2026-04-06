@@ -46,6 +46,7 @@ const primeFiles = async (options) => {
       userId: req.user.id,
       role: req.user.role,
       agentId,
+      userDepartments: req.user.departments ?? [],
     });
   } else {
     dbFiles = allFiles;
@@ -85,13 +86,14 @@ const primeFiles = async (options) => {
  * @param {boolean} [options.fileCitations=false] - Whether to include citation instructions
  * @returns
  */
-const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = false }) => {
+const createFileSearchTool = async ({ userId, authorId, files, entity_id, fileCitations = false }) => {
   return tool(
     async ({ query }) => {
       if (files.length === 0) {
         return ['No files to search. Instruct the user to add files for the search.', undefined];
       }
-      const jwtToken = generateShortLivedToken(userId);
+      const ragUserId = authorId ?? userId;
+      const jwtToken = generateShortLivedToken(ragUserId);
       if (!jwtToken) {
         return ['There was an error authenticating the file search request.', undefined];
       }

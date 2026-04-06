@@ -41,17 +41,17 @@
   --red-900: #7f1d1d;
   --red-950: #450a0a;
   --amber-50: #fffbeb;
-  --amber-100: #fef3c7;
+  --amber-100: #fff7e3;
   --amber-200: #fde68a;
   --amber-300: #fcd34d;
   --amber-400: #fbbf24;
   --amber-500: #f59e0b;
   --amber-600: #d97706;
   --amber-700: #b45309;
-  --amber-800: #92400e;
+  --amber-800: #655124;
   --amber-900: #78350f;
   --amber-950: #451a03;
-  --brand-purple: #ab68ff;
+  --brand-yellow: #ffc642;
   --gizmo-gray-500: #999;
   --gizmo-gray-600: #666;
   --gizmo-gray-950: #0f0f0f;
@@ -63,7 +63,7 @@
   --markdown-font-size: 1rem;
 }
 html {
-  --brand-purple: #ab68ff;
+  --brand-yellow: #ffc642;
   --presentation: var(--white);
   --text-primary: var(--gray-800);
   --text-secondary: var(--gray-600);
@@ -71,24 +71,24 @@ html {
   --text-tertiary: var(--gray-500);
   --text-warning: var(--amber-500);
   --text-destructive: var(--red-600);
-  --ring-primary: var(--gray-500);
+  --ring-primary: var(--amber-400);
   --header-primary: var(--white);
   --header-hover: var(--gray-50);
   --header-button-hover: var(--gray-50);
-  --surface-active: var(--gray-100);
-  --surface-active-alt: var(--gray-200);
-  --surface-hover: var(--gray-200);
+  --surface-active: var(--amber-100);
+  --surface-active-alt: var(--amber-100);
+  --surface-hover: var(--amber-100);
   --surface-hover-alt: var(--gray-300);
   --surface-primary: var(--white);
   --surface-primary-alt: var(--gray-50);
   --surface-primary-contrast: var(--gray-100);
   --surface-secondary: var(--gray-50);
   --surface-secondary-alt: var(--gray-200);
-  --surface-tertiary: var(--gray-100);
+  --surface-tertiary: var(--amber-100);
   --surface-tertiary-alt: var(--white);
   --surface-dialog: var(--white);
   --surface-submit: var(--green-700);
-  --surface-submit-hover: var(--green-800);
+  --surface-submit-hover: var(--amber-800);
   --surface-destructive: var(--red-700);
   --surface-destructive-hover: var(--red-800);
   --surface-chat: var(--white);
@@ -104,7 +104,7 @@ html {
   --foreground: 0 0% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
+  --primary: 42 100% 63%;
   --primary-foreground: 0 0% 98%;
   --secondary: 0 0% 96.1%;
   --secondary-foreground: 0 0% 9%;
@@ -116,7 +116,7 @@ html {
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 89.8%;
   --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
+  --ring: 41.9 100% 62.9%;
   --radius: 0.5rem;
   --chart-1: 12 76% 61%;
   --chart-2: 173 58% 39%;
@@ -126,7 +126,7 @@ html {
   --switch-unchecked: 0 0% 58%;
 }
 .dark {
-  --brand-purple: #ab68ff;
+  --brand-yellow: rgb(255, 198, 66);
   --presentation: var(--gray-800);
   --text-primary: var(--gray-100);
   --text-secondary: var(--gray-300);
@@ -137,20 +137,20 @@ html {
   --header-primary: var(--gray-700);
   --header-hover: var(--gray-600);
   --header-button-hover: var(--gray-700);
-  --surface-active: var(--gray-500);
-  --surface-active-alt: var(--gray-700);
-  --surface-hover: var(--gray-600);
+  --surface-active: var(--amber-500);
+  --surface-active-alt: var(--amber-800);
+  --surface-hover: var(--amber-800);
   --surface-hover-alt: var(--gray-600);
   --surface-primary: var(--gray-900);
   --surface-primary-alt: var(--gray-850);
   --surface-primary-contrast: var(--gray-850);
   --surface-secondary: var(--gray-800);
   --surface-secondary-alt: var(--gray-800);
-  --surface-tertiary: var(--gray-700);
+  --surface-tertiary: var(--amber-800);
   --surface-tertiary-alt: var(--gray-700);
   --surface-dialog: var(--gray-850);
   --surface-submit: var(--green-700);
-  --surface-submit-hover: var(--green-800);
+  --surface-submit-hover: var(--amber-800);
   --surface-destructive: var(--red-800);
   --surface-destructive-hover: var(--red-900);
   --surface-chat: var(--gray-700);
@@ -166,7 +166,7 @@ html {
   --foreground: 0 0% 98%;
   --card: 0 0% 3.9%;
   --card-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
+  --primary: 42 100% 63%;
   --primary-foreground: 0 0% 9%;
   --secondary: 0 0% 14.9%;
   --secondary-foreground: 0 0% 98%;
@@ -178,7 +178,7 @@ html {
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 14.9%;
   --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
+  --ring: 41.9 100% 10%;
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
@@ -1407,12 +1407,12 @@ button {
 .btn-primary {
   --tw-bg-opacity: 1;
   --tw-text-opacity: 1;
-  background-color: rgba(16, 163, 127, var(--tw-bg-opacity));
+  background-color: rgba(255, 198, 66, var(--tw-bg-opacity));
   color: rgba(255, 255, 255, var(--tw-text-opacity));
 }
 .btn-primary:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgba(26, 127, 100, var(--tw-bg-opacity));
+  --tw-bg-opacity: 0.8;
+  background-color: rgba(255, 198, 66, var(--tw-bg-opacity));
 }
 .btn-primary:focus {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)

@@ -49,7 +49,7 @@ function createTailwindColors() {
     'border-medium-alt': withOpacity('--border-medium-alt'),
     'border-heavy': withOpacity('--border-heavy'),
     'border-xheavy': withOpacity('--border-xheavy'),
-    'brand-purple': withOpacity('--brand-purple'),
+    'brand-yellow': withOpacity('--brand-yellow'),
     presentation: withOpacity('--presentation'),
     background: withOpacity('--background'),
     foreground: withOpacity('--foreground'),

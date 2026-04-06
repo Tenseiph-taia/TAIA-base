@@ -390,9 +390,9 @@ export const megabyte = 1024 * 1024;
 export const mbToBytes = (mb: number): number => mb * megabyte;
 
 const defaultSizeLimit = mbToBytes(512);
-const defaultTokenLimit = 100000;
+const defaultTokenLimit = 500000;
 const assistantsFileConfig = {
-  fileLimit: 10,
+  fileLimit: 20,
   fileSizeLimit: defaultSizeLimit,
   totalSizeLimit: defaultSizeLimit,
   supportedMimeTypes,

@@ -26,13 +26,14 @@ function getAttachedFileIds(agent) {
  * Access is always scoped to files actually attached to the agent's tool_resources.
  * @param {Object} params - Parameters object
  * @param {string} params.userId - The user ID to check access for
- * @param {string} [params.role] - Optional user role to avoid DB query
+ * @param {string}[params.role] - Optional user role to avoid DB query
  * @param {string[]} params.fileIds - Array of file IDs to check
  * @param {string} params.agentId - The agent ID that might grant access
  * @param {boolean} [params.isDelete] - Whether the operation is a delete operation
+ * @param {string[]} [params.userDepartments] - Array of user departments for custom RBAC
  * @returns {Promise<Map<string, boolean>>} Map of fileId to access status
  */
-const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete }) => {
+const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete, userDepartments }) => {
   const accessMap = new Map();
 
   fileIds.forEach((fileId) => accessMap.set(fileId, false));
@@ -63,9 +64,28 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
       requiredPermission: PermissionBits.VIEW,
     });
 
+    // --- RBAC: FILE ACCESS BY DEPARTMENT ---
     if (!hasViewPermission) {
+      if (userDepartments && Array.isArray(userDepartments)) {
+        const agentCategory = String(agent.category ?? '').toUpperCase();
+        const userDepts = userDepartments.map(d => String(d).toUpperCase());
+        
+        if (!userDepts.includes('GENERAL')) {
+          userDepts.push('GENERAL');
+        }
+        
+        if (agentCategory && userDepts.includes(agentCategory)) {
+          fileIds.forEach((fileId) => {
+            if (attachedFileIds.has(fileId)) {
+              accessMap.set(fileId, true);
+            }
+          });
+          return accessMap;
+        }
+      }
       return accessMap;
     }
+    // ---------------------------------------------------
 
     if (isDelete) {
       const hasEditPermission = await checkPermission({
@@ -103,8 +123,8 @@ const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDele
  * @param {string} params.agentId - Agent ID that might grant access to files
  * @returns {Promise<Array<MongoFile>>} Filtered array of accessible files
  */
-const filterFilesByAgentAccess = async ({ files, userId, role, agentId }) => {
-  if (!userId || !agentId || !files || files.length === 0 || isEphemeralAgentId(agentId)) {
+const filterFilesByAgentAccess = async ({ files, userId, role, agentId, userDepartments }) => {
+  if (!userId || !agentId || !files || files.length === 0) {
     return files;
   }
 
@@ -126,7 +146,9 @@ const filterFilesByAgentAccess = async ({ files, userId, role, agentId }) => {
 
   // Batch check access for all non-owned files
   const fileIds = filesToCheck.map((f) => f.file_id);
-  const accessMap = await hasAccessToFilesViaAgent({ userId, role, fileIds, agentId });
+  const accessMap = await hasAccessToFilesViaAgent({ 
+    userId, role, fileIds, agentId, userDepartments 
+  });
 
   // Filter files based on access
   const accessibleFiles = filesToCheck.filter((file) => accessMap.get(file.file_id));

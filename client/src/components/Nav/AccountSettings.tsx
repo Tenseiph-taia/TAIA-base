@@ -73,7 +73,7 @@ function AccountSettings({ collapsed = false }: { collapsed?: boolean }) {
           <FileText className="icon-md" aria-hidden="true" />
           {localize('com_nav_my_files')}
         </Menu.MenuItem>
-        {startupConfig?.helpAndFaqURL !== '/' && (
+        {/* {startupConfig?.helpAndFaqURL !== '/' && (
           <Menu.MenuItem
             onClick={() => window.open(startupConfig?.helpAndFaqURL, '_blank')}
             className="select-item text-sm"
@@ -81,7 +81,7 @@ function AccountSettings({ collapsed = false }: { collapsed?: boolean }) {
             <LinkIcon aria-hidden="true" />
             {localize('com_nav_help_faq')}
           </Menu.MenuItem>
-        )}
+        )} */}
         <Menu.MenuItem onClick={() => setShowSettings(true)} className="select-item text-sm">
           <GearIcon className="icon-md" aria-hidden="true" />
           {localize('com_nav_settings')}

@@ -186,6 +186,9 @@ const startServer = async () => {
   app.use('/api/tags', routes.tags);
   app.use('/api/mcp', routes.mcp);
 
+  const leadsRoute = require('./routes/custom/leads');
+  app.use('/api/leads', leadsRoute);
+
   /** 404 for unmatched API routes */
   app.use('/api', apiNotFound);
 

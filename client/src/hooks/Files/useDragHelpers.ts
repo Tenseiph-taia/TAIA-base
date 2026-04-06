@@ -41,22 +41,39 @@ export default function useDragHelpers() {
     [conversation?.endpoint],
   );
 
+  const agentId = conversation?.agent_id;
+
   const { handleFiles } = useFileHandling();
+
+  const { handleFiles: handleAgentFiles } = useFileHandling(
+    agentId
+      ? {
+          additionalMetadata: {
+            agent_id: agentId,
+          },
+        }
+      : undefined,
+  );
 
   const handleOptionSelect = useCallback(
     (toolResource: EToolResources | undefined) => {
-      /** File search is not automatically enabled to simulate legacy behavior */
       if (toolResource && toolResource !== EToolResources.file_search) {
         setEphemeralAgent((prev) => ({
           ...prev,
           [toolResource]: true,
         }));
       }
-      handleFiles(draggedFiles, toolResource);
+
+      if (toolResource === EToolResources.file_search && agentId) {
+        handleAgentFiles(draggedFiles, EToolResources.file_search);
+      } else {
+        handleFiles(draggedFiles, toolResource);
+      }
+
       setShowModal(false);
       setDraggedFiles([]);
     },
-    [draggedFiles, handleFiles, setEphemeralAgent],
+    [draggedFiles, handleFiles, handleAgentFiles, agentId, setEphemeralAgent],
   );
 
   /** Use refs to avoid re-creating the drop handler */

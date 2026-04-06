@@ -4,6 +4,7 @@ import { useRecoilState } from 'recoil';
 import { Dropdown, ThemeContext } from '@librechat/client';
 import ArchivedChats from './ArchivedChats';
 import ToggleSwitch from '../ToggleSwitch';
+import { useAuthContext } from '~/hooks/AuthContext';
 import { useLocalize } from '~/hooks';
 import store from '~/store';
 
@@ -148,6 +149,8 @@ function General() {
 
   const [langcode, setLangcode] = useRecoilState(store.lang);
 
+   const { user } = useAuthContext(); 
+
   const changeTheme = useCallback(
     (value: string) => {
       setTheme(value);
@@ -171,6 +174,13 @@ function General() {
     [setLangcode],
   );
 
+  const filteredConfigs = toggleSwitchConfigs.filter((config) => {
+    if (config.switchId === 'hideSidePanel' && user?.role === 'USER') { 
+      return false; 
+    }
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-3 p-1 text-sm text-text-primary">
       <div className="pb-3">
@@ -179,7 +189,7 @@ function General() {
       <div className="pb-3">
         <LangSelector langcode={langcode} onChange={changeLang} />
       </div>
-      {toggleSwitchConfigs.map((config) => (
+      {filteredConfigs.map((config) => (
         <div key={config.key} className="pb-3">
           <ToggleSwitch
             stateAtom={config.stateAtom}

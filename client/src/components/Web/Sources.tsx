@@ -571,6 +571,10 @@ function SourcesComponent({ messageId, conversationId }: SourcesProps = {}) {
   const localize = useLocalize();
   const { searchResults } = useSearchContext();
 
+  const disclosure = Ariakit.useDisclosureStore({ defaultOpen: false });
+
+  const isOpen = disclosure.useState('open');
+
   // Simple search results processing with good memoization
   const { organicSources, topStories, images, hasAnswerBox, agentFiles } = useMemo(() => {
     const organicSourcesMap = new Map<string, ValidSource>();
@@ -722,6 +726,21 @@ function SourcesComponent({ messageId, conversationId }: SourcesProps = {}) {
 
   return (
     <div role="region" aria-label={localize('com_sources_region_label')}>
+      <Ariakit.Disclosure
+        store={disclosure}
+        className="flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        <span className="flex items-center gap-2">
+          <Globe className="h-4 w-4" aria-hidden="true" />
+          {localize('com_sources_title')}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </Ariakit.Disclosure>
+
+      <Ariakit.DisclosureContent store={disclosure} className="mt-3">
       <AnimatedTabs
         tabs={tabs}
         containerClassName="flex min-w-full mb-4"
@@ -729,6 +748,7 @@ function SourcesComponent({ messageId, conversationId }: SourcesProps = {}) {
         tabPanelClassName="w-full overflow-x-auto scrollbar-none md:mx-0 md:px-0"
         tabClassName="flex items-center whitespace-nowrap text-xs font-medium text-token-text-secondary px-1 pt-2 pb-1 border-b-2 border-transparent data-[state=active]:text-text-primary outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       />
+      </Ariakit.DisclosureContent>
     </div>
   );
 }

@@ -30,12 +30,34 @@ services:
       target: node
     volumes:
       - ./librechat.yaml:/app/librechat.yaml
+      - ./docs:/app/docs
+      - ./leads:/app/leads
 
   # EXPOSE MONGODB PORTS - USE CAREFULLY, THIS MAKES YOUR DATABASE VULNERABLE TO ATTACKS
   mongodb:
     ports:
       - 27017:27017
+  
+  # USE RAG API IMAGE WITH LOCAL EMBEDDINGS SUPPORT
+  rag_api:
+    image: registry.librechat.ai/danny-avila/librechat-rag-api-dev:latest
+    environment:
+      - EMBEDDINGS_PROVIDER=${EMBEDDINGS_PROVIDER}
+      - EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
 
+  # Whisper
+  whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    container_name: local-whisper
+    environment:
+      - HF_HOME=/models 
+    volumes:
+      # Saves the model permanently so it never downloads twice
+      - ./data/speaches/models:/models
+    ports:
+      - "8000:8000"
+    restart: always
 # # LOCAL BUILD
 #   api:
 #     image: librechat
@@ -103,9 +125,6 @@ services:
 #     ports:
 #       - 7700:7700
 
-# # USE RAG API IMAGE WITH LOCAL EMBEDDINGS SUPPORT
-#  rag_api:
-#    image: registry.librechat.ai/danny-avila/librechat-rag-api-dev:latest
 # # For Linux user:
 #    extra_hosts:
 #      - "host.docker.internal:host-gateway"
@@ -130,7 +149,7 @@ services:
     container_name: ollama_pull_model
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    command: pull qwen3.5:4b
+    command: pull nemotron-3-super:cloud
     depends_on:
       ollama:
         condition: service_healthy

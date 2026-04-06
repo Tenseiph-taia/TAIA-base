@@ -646,6 +646,7 @@ const getListAgentsHandler = async (req, res) => {
     const userId = req.user.id;
     const { category, search, limit, cursor, promoted } = req.query;
     let requiredPermission = req.query.requiredPermission;
+    
     if (typeof requiredPermission === 'string') {
       requiredPermission = parseInt(requiredPermission, 10);
       if (isNaN(requiredPermission)) {
@@ -654,15 +655,16 @@ const getListAgentsHandler = async (req, res) => {
     } else if (typeof requiredPermission !== 'number') {
       requiredPermission = PermissionBits.VIEW;
     }
+    
     // Base filter
     const filter = {};
 
-    // Handle category filter - only apply if category is defined
+    // Handle category filter
     if (category !== undefined && category.trim() !== '') {
       filter.category = category;
     }
 
-    // Handle promoted filter - only from query param
+    // Handle promoted filter
     if (promoted === '1') {
       filter.is_promoted = true;
     } else if (promoted === '0') {
@@ -675,39 +677,110 @@ const getListAgentsHandler = async (req, res) => {
       const regex = new RegExp(safeSearch, 'i');
       filter.$or = [{ name: regex }, { description: regex }];
     }
+    
+    // --- RBAC: FILTER INJECTION ---
+    try {
+      if (req.user.role !== 'ADMIN') {
+        const userDepts = Array.isArray(req.user.departments)
+          ? req.user.departments.map(d => String(d))
+          : [];
 
-    // Get agent IDs the user has VIEW access to via ACL
-    const accessibleIds = await findAccessibleResources({
+        const allowedCategories = [...userDepts, 'General', 'general', 'GENERAL'];
+        const searchCategories = allowedCategories.flatMap(c =>[
+          c, c.toLowerCase(), c.toUpperCase(), c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
+        ]);
+
+        const securityCondition = {
+          $or:[
+            { category: { $in: searchCategories } },
+            { author: userId }
+          ]
+        };
+
+        if (filter.category) {
+          const isAllowed = searchCategories.includes(String(filter.category));
+          if (!isAllowed) {
+            filter.author = userId;
+          }
+        } else {
+          if (filter.$or) {
+            filter.$and =[{ $or: filter.$or }, securityCondition];
+            delete filter.$or;
+          } else {
+            Object.assign(filter, securityCondition);
+          }
+        }
+      }
+    } catch (filterErr) {
+      logger.error('[/Agents] TAIA Filter Injection Error:', filterErr);
+    }
+    // ------------------------------------------
+
+    // Get agent IDs the user has VIEW access to via native ACL
+    const aclIds = await findAccessibleResources({
       userId,
       role: req.user.role,
       resourceType: ResourceType.AGENT,
       requiredPermissions: requiredPermission,
     });
+    
+    // Clone array to prevent "Object is not extensible" crash
+    let accessibleIds = [...aclIds];
+
+    // --- RBAC: ACL ID INJECTION ---
+    try {
+      if (req.user.role !== 'ADMIN') {
+        const userDepts = Array.isArray(req.user.departments)
+          ? req.user.departments.map(d => String(d))
+          : [];
+          
+        const allowedCategories =[...userDepts, 'General', 'general', 'GENERAL'];
+        
+        if (allowedCategories.length > 0) {
+          const searchCategories = allowedCategories.flatMap(c =>[
+            c, c.toLowerCase(), c.toUpperCase(), c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
+          ]);
+
+          const deptAgents = await db.getAgents({
+            category: { $in: searchCategories }
+          });
+          
+          const deptIds = deptAgents.map(a => a._id);
+          const existingIdStrings = new Set(accessibleIds.map(id => id.toString()));
+          
+          for (const id of deptIds) {
+            if (!existingIdStrings.has(id.toString())) {
+              accessibleIds.push(id); // Safe now because we cloned the array!
+            }
+          }
+        }
+      }
+    } catch (rbacErr) {
+      logger.error('[/Agents] TAIA RBAC ID Injection Error:', rbacErr);
+    }
+    // ------------------------------------------
 
     const publiclyAccessibleIds = await findPubliclyAccessibleResources({
       resourceType: ResourceType.AGENT,
       requiredPermissions: PermissionBits.VIEW,
     });
 
-    /**
-     * Refresh all S3 avatars for this user's accessible agent set (not only the current page)
-     * This addresses page-size limits preventing refresh of agents beyond the first page
-     */
     const cache = getLogStores(CacheKeys.S3_EXPIRY_INTERVAL);
     const refreshKey = `${userId}:agents_avatar_refresh`;
     let cachedRefresh = await cache.get(refreshKey);
     const isValidCachedRefresh =
       cachedRefresh != null && typeof cachedRefresh === 'object' && cachedRefresh.urlCache != null;
+      
     if (!isValidCachedRefresh) {
       try {
         const fullList = await db.getListAgentsByAccess({
           accessibleIds,
-          otherParams: {},
+          otherParams: req.user.role !== 'ADMIN' ? filter : {},
           limit: MAX_AVATAR_REFRESH_AGENTS,
           after: null,
         });
         const { urlCache } = await refreshListAvatars({
-          agents: fullList?.data ?? [],
+          agents: fullList?.data ??[],
           userId,
           refreshS3Url,
           updateAgent: db.updateAgent,
@@ -721,7 +794,6 @@ const getListAgentsHandler = async (req, res) => {
       logger.debug('[/Agents] S3 avatar refresh already checked, skipping');
     }
 
-    // Use the new ACL-aware function
     const data = await db.getListAgentsByAccess({
       accessibleIds,
       otherParams: filter,
@@ -729,14 +801,14 @@ const getListAgentsHandler = async (req, res) => {
       after: cursor,
     });
 
-    const agents = data?.data ?? [];
+    const agents = data?.data ??[];
     if (!agents.length) {
       return res.json(data);
     }
 
     const publicSet = new Set(publiclyAccessibleIds.map((oid) => oid.toString()));
-
     const urlCache = cachedRefresh?.urlCache;
+    
     data.data = agents.map((agent) => {
       try {
         if (agent?._id && publicSet.has(agent._id.toString())) {
@@ -751,7 +823,6 @@ const getListAgentsHandler = async (req, res) => {
           agent.avatar = { ...agent.avatar, filepath: urlCache[agent.id] };
         }
       } catch (e) {
-        // Silently ignore mapping errors
         void e;
       }
       return agent;
@@ -759,7 +830,7 @@ const getListAgentsHandler = async (req, res) => {
 
     return res.json(data);
   } catch (error) {
-    logger.error('[/Agents] Error listing Agents: %o', error);
+    logger.error(`[/Agents] Error listing Agents: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };

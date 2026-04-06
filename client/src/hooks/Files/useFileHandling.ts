@@ -121,6 +121,28 @@ const useFileHandlingCore = (params: UseFileHandling | undefined, fileState: Fil
         console.log('upload success', data);
         if (agent_id) {
           queryClient.refetchQueries([QueryKeys.agent, agent_id]);
+          
+          if (data.isDuplicate) {
+            clearUploadTimer(data.temp_file_id);
+            deleteFileById(data.temp_file_id);
+            showToast({
+              message: `"${data.filename}" is already in this agent's knowledge base`,
+              status: 'warning',
+              duration: 4000,
+            });
+            return;
+          }
+
+          updateFileById(data.temp_file_id, {
+            progress: 1,
+            file_id: data.file_id,
+            temp_file_id: data.temp_file_id,
+            filepath: data.filepath,
+            type: data.type,
+            filename: data.filename,
+            source: data.source,
+            embedded: data.embedded,
+          });
           return;
         }
         updateFileById(

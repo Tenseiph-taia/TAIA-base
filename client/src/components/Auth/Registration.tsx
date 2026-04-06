@@ -92,13 +92,13 @@ const Registration: React.FC = () => {
             validation,
           )}
           aria-invalid={!!errors[id]}
-          className="webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 text-text-primary duration-200 focus:border-green-500 focus:outline-none"
+          className="webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 text-text-primary duration-200 focus:border-brand-yellow focus:outline-none"
           placeholder=" "
           data-testid={id}
         />
         <label
           htmlFor={id}
-          className="absolute start-3 top-1.5 z-10 origin-[0] -translate-y-4 scale-75 transform bg-surface-primary px-2 text-sm text-text-secondary-alt duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-1.5 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-green-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+          className="absolute start-3 top-1.5 z-10 origin-[0] -translate-y-4 scale-75 transform bg-surface-primary px-2 text-sm text-text-secondary-alt duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-1.5 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-brand-yellow rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
         >
           {localize(label)}
         </label>
@@ -126,13 +126,13 @@ const Registration: React.FC = () => {
 
           return (
             <div
-              className="min-h-[48px] w-full cursor-text rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2 pt-3 focus-within:border-green-500"
+              className="min-h-[48px] w-full cursor-text rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2 pt-3 focus-within:border-brand-yellow"
               onClick={() => deptInputRef.current?.focus()}
             >
               <label
                 className={`pointer-events-none absolute start-3 z-10 origin-[0] transform bg-surface-primary px-2 text-sm duration-200 ${
                   isFloated
-                    ? 'top-1.5 -translate-y-4 scale-75 text-green-500'
+                    ? 'top-1.5 -translate-y-4 scale-75 text-brand-yellow'
                     : 'top-1/2 -translate-y-1/2 scale-100 text-text-secondary-alt'
                 }`}
               >
@@ -142,7 +142,7 @@ const Registration: React.FC = () => {
                 {tags.map((dept, index) => (
                   <span
                     key={index}
-                    className="flex items-center gap-1 rounded-full bg-green-500/20 px-2.5 py-0.5 text-sm text-green-700 dark:text-green-300"
+                    className="flex items-center gap-1 rounded-full bg-brand-yellow px-2.5 py-0.5 text-sm text-text-primary dark:text-text-primary"
                   >
                     {dept}
                     <button
@@ -201,7 +201,7 @@ const Registration: React.FC = () => {
       )}
       {registerUser.isSuccess && countdown > 0 && (
         <div
-          className="rounded-md border border-green-500 bg-green-500/10 px-3 py-2 text-sm text-gray-600 dark:text-gray-200"
+          className="rounded-md border border-brand-yellow bg-brand-yellow/10 px-3 py-2 text-sm text-gray-600 dark:text-gray-200"
           role="alert"
         >
           {localize(
@@ -287,7 +287,7 @@ const Registration: React.FC = () => {
             <a
               href={loginPage()}
               aria-label="Login"
-              className="inline-flex p-1 text-sm font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+              className="inline-flex p-1 text-sm font-medium text-brand-yellow transition-colors hover:text-brand-yellow/20 dark:text-brand-yellow dark:hover:text-brand-yellow/80"
             >
               {localize('com_auth_login')}
             </a>

@@ -45,7 +45,7 @@ export interface IThemeRGB {
   'rgb-border-xheavy'?: string;
 
   // Brand colors
-  'rgb-brand-purple'?: string;
+  'rgb-brand-yellow'?: string;
 
   // Presentation
   'rgb-presentation'?: string;
@@ -104,7 +104,7 @@ export interface IThemeVariables {
   '--border-medium-alt': string;
   '--border-heavy': string;
   '--border-xheavy': string;
-  '--brand-purple': string;
+  '--brand-yellow': string;
   '--presentation': string;
 
   // Utility variables
@@ -161,7 +161,7 @@ export interface IThemeColors {
   'border-medium-alt'?: string;
   'border-heavy'?: string;
   'border-xheavy'?: string;
-  'brand-purple'?: string;
+  'brand-yellow'?: string;
   presentation?: string;
 
   // Utility colors
