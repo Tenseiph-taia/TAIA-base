@@ -27,7 +27,7 @@ cache: true
 
 # Custom interface configuration
 interface:
-  customWelcome: 'Hi! I am TAIA, your Tensei AI Agent. Ask me anything!'
+  # customWelcome: 'Hi! I am TAIA, your Tensei AI Agent. Ask me anything!'
   # Enable/disable file search as a chatarea selection (default: true)
   # Note: This setting does not disable the Agents File Search Capability.
   # To disable the Agents Capability, see the Agents Endpoint configuration instead.
@@ -121,11 +121,11 @@ interface:
   fileCitations: true
   # Remote Agents configuration
   # Controls user permissions for remote agents with external API support
-  # remoteAgents:
-  #   use: false
-  #   create: false
-  #   share: false
-  #   public: false
+  remoteAgents:
+    use: true
+    create: true
+    share: true
+    public: true
   # MCP Servers configuration example
   # mcpServers:
     # Controls user permissions for MCP (Model Context Protocol) server management
@@ -226,8 +226,12 @@ actions:
 # To allow internal targets like host.docker.internal, you MUST explicitly add them to allowedDomains.
 # Supports wildcards: '*.example.com' matches 'api.example.com', 'staging.example.com', etc.
 # Supports protocol/port restrictions: 'https://api.example.com:8443' restricts to specific protocol/port.
-# mcpSettings:
-#   allowedDomains:
+mcpSettings:
+  allowedDomains:
+    - 'web_tools'
+    - 'web_tools:8000'
+    - 'taia-sales-mcp'
+    - 'taia-sales-mcp:8000'
 #     - 'host.docker.internal'    # Docker host access (required for Docker setups)
 #     - 'localhost'               # Local development
 #     - '*.example.com'           # Wildcard subdomain
@@ -235,7 +239,15 @@ actions:
 #     - 'http://internal:8080'    # Protocol and port restricted
 
 # Example MCP Servers Object Structure
-# mcpServers:
+mcpServers:
+  web-tools:
+    type: sse
+    url: "http://web_tools:8000/sse"
+
+  taia-sales:
+    type: sse
+    url: "http://taia-sales-mcp:8000/sse"
+
 #   everything:
 #     # type: sse # type can optionally be omitted
 #     url: http://localhost:3001/sse
@@ -361,10 +373,10 @@ endpoints:
       baseURL: "http://ollama:11434/v1" 
       models:
         default:
-          - "nemotron-3-super:cloud"
+          - "gemma4:31b-cloud"
         fetch: true
       titleConvo: true
-      titleModel: "nemotron-3-super:cloud"
+      titleModel: "gemma4:31b-cloud"
       modelDisplayLabel: "TAIA Dev"
       num_ctx: 131072
       maxContent: 131072
