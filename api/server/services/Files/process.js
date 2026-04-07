@@ -36,6 +36,7 @@ const { getStrategyFunctions } = require('./strategies');
 const { determineFileType } = require('~/server/utils');
 const { STTService } = require('./Audio/STTService');
 const db = require('~/models');
+const { getAgent } = require('~/models');
 
 /**
  * Creates a modular file upload wrapper that ensures filename sanitization
@@ -514,11 +515,6 @@ const processAgentFileUpload = async ({ req, res, metadata }) => {
     const existingAgent = await getAgent({ id: agent_id });
     const existingFileIds = existingAgent?.tool_resources?.file_search?.file_ids ?? [];
     if (existingFileIds.length > 0) {
-      
-      
-      
-      
-      
       const allExistingFiles = await getFiles({ file_id: { $in: existingFileIds } });
       const isDuplicate = allExistingFiles.some(
         f => sanitizeFilename(f.filename) === sanitizeFilename(file.originalname)

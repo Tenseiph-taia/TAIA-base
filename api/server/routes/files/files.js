@@ -35,6 +35,7 @@ const { cleanFileName } = require('~/server/utils/files');
 const { getLogStores } = require('~/cache');
 const { Readable } = require('stream');
 const db = require('~/models');
+const { getAgent } = require('~/models');
 
 const router = express.Router();
 
@@ -395,7 +396,7 @@ router.post('/', async (req, res) => {
         req,
         res,
         metadata,
-        getAgent: db.getAgent,
+        getAgent: getAgent,
         checkPermission,
       });
       if (denied) {
