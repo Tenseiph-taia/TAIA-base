@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAIA OCR Document Viewer</title>
+    <link rel="stylesheet" href="/static/css/viewer.css">
+    <link rel="icon" href="/static/assets/mascott_head.png" type="image/png">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="viewer-header">
+            <div class="header-left">
+                <div class="logo">
+                    <img src="/static/assets/mascott_head.png" alt="TAIA" class="logo-icon">
+                    <span class="logo-text">TAIA OCR Viewer</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="ocrProgress" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-bar mt-1">
+                        <div class="progress-fill translation-fill" id="translationProgress" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="ocrText">OCR: 0/0</span>
+                        <span class="separator">•</span>
+                        <span id="translationText">Translation: 0/0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="page-navigator">
+                    <label for="pageNumber">Page:</label>
+                    <input type="number" id="pageNumber" min="1" value="1" onchange="viewer.jumpToPage(this.value)">
+                    <span id="totalPagesDisplay">of 0</span>
+                </div>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="syncScroll" checked onchange="viewer.toggleSyncScroll(this.checked)">
+                    <span>Sync Scroll</span>
+                </label>
+                <div class="zoom-controls">
+                    <button class="btn btn-icon" onclick="viewer.zoomOut()">−</button>
+                    <span class="zoom-level" id="zoomLevel">15px</span>
+                    <button class="btn btn-icon" onclick="viewer.zoomIn()">+</button>
+                </div>
+                <button class="btn btn-copy" onclick="viewer.copyPageText('ja')" title="Copy Japanese">JA</button>
+                <button class="btn btn-copy" onclick="viewer.copyPageText('en')" title="Copy English">EN</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="viewer-content">
+            <!-- Original Image Panel -->
+            <section class="panel panel-original" id="originalPanel">
+                <div class="panel-header">
+                    <h2>ORIGINAL</h2>
+                </div>
+                <div class="panel-content sync-scroll" id="originalContent">
+                    <!-- Images will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Japanese Text Panel -->
+            <section class="panel panel-japanese">
+                <div class="panel-header">
+                    <h2>日本語</h2>
+                </div>
+                <div class="panel-content sync-scroll" id="japaneseContent">
+                    <!-- Japanese text will be rendered here -->
+                </div>
+            </section>
+
+            <!-- English Translation Panel -->
+            <section class="panel panel-english">
+                <div class="panel-header">
+                    <h2>ENGLISH</h2>
+                </div>
+                <div class="panel-content sync-scroll" id="englishContent">
+                    <!-- English translations will be rendered here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <p>Loading document...</p>
+        </div>
+
+        <!-- Error Toast (Hidden by default) -->
+        <div class="toast toast-error hidden" id="errorToast">
+            <span class="toast-icon">⚠️</span>
+            <span class="toast-message" id="errorMessage"></span>
+            <button class="toast-close" onclick="viewer.hideError()">×</button>
+        </div>
+    </div>
+
+    <script src="/static/js/viewer.js"></script>
+</body>
+</html>
