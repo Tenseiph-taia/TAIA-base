@@ -35,7 +35,7 @@ services:
   mongodb:
     ports:
       - 27017:27017
-  
+    
   # USE RAG API IMAGE WITH LOCAL EMBEDDINGS SUPPORT
   rag_api:
     image: registry.librechat.ai/danny-avila/librechat-rag-api-dev:latest
@@ -101,6 +101,33 @@ services:
       - PYTHONUNBUFFERED=1
     ports:
       - "8001:8001"   # Admin panel calls this from the browser
+    networks:
+      - default
+
+  ocr:
+    build:
+      context: ./mcps/ocr
+      dockerfile: Dockerfile
+    container_name: taia_ocr
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+      - "8004:8004"
+    environment:
+      # - TRANSLATION_API_URL=http://vllm_service:8000/v1
+      # - TRANSLATION_MODEL=meta-llama/Llama-3.3-70B-Instruct
+      - TRANSLATION_API_URL=http://ollama:11434/v1
+      - TRANSLATION_MODEL=nemotron-3-super:cloud
+      - OCR_ENABLE_PREPROCESSING=1
+      - OCR_PDF_DPI=300
+    volumes:
+      - ocr_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
     networks:
       - default
 
@@ -214,7 +241,6 @@ services:
       --tensor-parallel-size 2 
       --quantization fp8
       --gpu-memory-utilization 0.9
-      --max-model-len 8192
     deploy:
       resources:
         reservations:
@@ -227,3 +253,4 @@ volumes:
   ollama_data:
   huggingface_cache:
   sales_data:
+  ocr_data:

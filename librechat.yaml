@@ -212,9 +212,6 @@ speech:
 # Supports wildcards: '*.example.com' and protocol/port restrictions: 'https://api.example.com:8443'
 actions:
   allowedDomains:
-    - 'swapi.dev'
-    - 'librechat.ai'
-    - 'google.com'
     - 'localhost'
     - 'localhost:3080'
     - '127.0.0.1'
@@ -232,6 +229,8 @@ mcpSettings:
     - 'web_tools:8000'
     - 'taia-sales-mcp'
     - 'taia-sales-mcp:8000'
+    - 'ocr'
+    - 'ocr:8003'
 #     - 'host.docker.internal'    # Docker host access (required for Docker setups)
 #     - 'localhost'               # Local development
 #     - '*.example.com'           # Wildcard subdomain
@@ -247,6 +246,10 @@ mcpServers:
   taia-sales:
     type: sse
     url: "http://taia-sales-mcp:8000/sse"
+
+  ocr:
+    type: sse
+    url: "http://ocr:8003/sse"
 
 #   everything:
 #     # type: sse # type can optionally be omitted
@@ -273,6 +276,11 @@ mcpServers:
 #       - -y
 #       - "mcp-obsidian"
 #       - /path/to/obsidian/vault
+
+ocr:
+  strategy: "azure_mistral_ocr"
+  apiKey: "local"
+  baseURL: "http://ocr:8004/v1"
 
 # Definition of custom endpoints
 endpoints:
