@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from ocr.router import run_ocr, extract_pages, ocr_single_page
 from ocr.safety import parse_data_url, safe_base64_decode
 from ocr.rate_limit import check_rate_limit
-from ocr.config import OCR_CONCURRENCY, VIEWER_BASE_URL, TRANSLATION_ENABLED, TRANSLATION_MODEL
+from ocr.config import VLM_OCR_CONCURRENCY, VIEWER_BASE_URL, TRANSLATION_ENABLED, TRANSLATION_MODEL, PDF_RENDER_DPI
 from ocr.storage_config import ensure_storage_dirs, get_upload_dir, get_db_path
 from ocr.storage import (
     _get_conn,
@@ -44,7 +44,7 @@ def _suffix_from_filename(filename: str) -> str:
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     return SUFFIX_MAP.get(f".{ext}", ".bin")
 
-semaphore = asyncio.Semaphore(OCR_CONCURRENCY)
+semaphore = asyncio.Semaphore(VLM_OCR_CONCURRENCY)
 background_tasks: dict[str, asyncio.Task] = {}
 logger = logging.getLogger("taia-ocr")
 
@@ -189,139 +189,150 @@ async def ocr_endpoint(request: Request):
     """Mistral OCR API compatible endpoint (synchronous).
     Also creates a viewer document as a side effect and starts background translation.
     """
-    ip = request.client.host
-    if not check_rate_limit(ip):
-        return JSONResponse(
-            status_code=429,
-            content={
-                "object": "error",
-                "message": "Rate limit exceeded",
-                "type": "rate_limit_error",
-            },
-        )
-
-    body = await request.json()
-    doc = body.get("document", {})
-    raw = doc.get("document_url") or doc.get("image_url")
-
-    if not raw:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "object": "error",
-                "message": "Missing document_url or image_url",
-                "type": "invalid_request_error",
-            },
-        )
-
     try:
-        data, suffix = parse_data_url(raw)
-    except Exception as e:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "object": "error",
-                "message": f"Could not decode input: {e}",
-                "type": "invalid_request_error",
-            },
-        )
+        ip = request.client.host
+        if not check_rate_limit(ip):
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "object": "error",
+                    "message": "Rate limit exceeded",
+                    "type": "rate_limit_error",
+                },
+            )
 
-    if not data:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "object": "error",
-                "message": "Could not decode input",
-                "type": "invalid_request_error",
-            },
-        )
+        body = await request.json()
+        doc = body.get("document", {})
+        # document_url is always a plain string (data URL or HTTP URL).
+        # image_url follows the OpenAI vision format: either a string
+        # or {"url": "..."} dict — handle both.
+        raw = doc.get("document_url")
+        if not raw:
+            image_url_field = doc.get("image_url")
+            if isinstance(image_url_field, dict):
+                raw = image_url_field.get("url")
+            elif isinstance(image_url_field, str):
+                raw = image_url_field
 
-    # Max upload safeguard
-    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-    if len(data) > MAX_FILE_SIZE:
-        return JSONResponse(
-            status_code=413,
-            content={"error": "File too large"}
-        )
+        if not raw:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "object": "error",
+                    "message": "Missing document_url or image_url",
+                    "type": "invalid_request_error",
+                },
+            )
 
-    async with semaphore:
-        pages = await asyncio.to_thread(run_ocr, data, suffix)
+        try:
+            data, suffix = parse_data_url(raw)
+        except Exception as e:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "object": "error",
+                    "message": f"Could not decode input: {e}",
+                    "type": "invalid_request_error",
+                },
+            )
 
-    # ── Create viewer document as side effect ──────────────
-    doc_id = None
-    viewer_url = None
+        if not data:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "object": "error",
+                    "message": "Could not decode input",
+                    "type": "invalid_request_error",
+                },
+            )
 
-    try:
-        # Determine title from suffix
-        title = f"OCR Document"
+        # Max upload safeguard
+        MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+        if len(data) > MAX_FILE_SIZE:
+            return JSONResponse(
+                status_code=413,
+                content={"error": "File too large"}
+            )
+
+        try:
+            page_images = await asyncio.to_thread(extract_pages, data, suffix)
+        except Exception as e:
+            logger.error("[/v1/ocr] Page extraction failed: %s", e, exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={"object": "error", "message": f"Page extraction failed: {e}",
+                         "type": "internal_error"},
+            )
+
+        if not page_images:
+            return JSONResponse(
+                status_code=400,
+                content={"object": "error", "message": "No pages found in document",
+                         "type": "invalid_request_error"},
+            )
+
+        total_pages = len(page_images)
+
+        title = "OCR Document"
         has_images = suffix in (".pdf", ".docx")
+        doc_id = create_document(
+            title=title,
+            filename=f"document{suffix}",
+            total_pages=total_pages,
+            has_images=has_images,
+        )
 
-        # Split OCR text into pages
-        page_texts = []
-        for page in pages:
-            page_texts.append(page.get("markdown", ""))
+        # Save all page images for the viewer
+        for pg in page_images:
+            save_page_image(doc_id, pg["index"], pg["image"])
 
-        total_pages = len(page_texts)
-        if total_pages > 0:
-            doc_id = create_document(
-                title=title,
-                filename=f"document{suffix}",
-                total_pages=total_pages,
-                has_images=has_images,
-            )
+        viewer_url = f"{VIEWER_BASE_URL}/view/{doc_id}"
 
-            for i, text in enumerate(page_texts):
-                update_page_ocr(doc_id, i, text, confidence=0.0)
+        task = asyncio.create_task(
+            _process_document_background(doc_id, total_pages)
+        )
+        background_tasks[doc_id] = task
 
-            # Save page images if available (for source toggle)
-            try:
-                page_images = await asyncio.to_thread(extract_pages, data, suffix)
-                for pg in page_images:
-                    save_page_image(doc_id, pg["index"], pg["image"])
-                del page_images
-            except Exception:
-                pass  # Non-critical — viewer works without source images
+        logger.info(
+            "[/v1/ocr] Document %s queued: %d pages, viewer=%s",
+            doc_id, total_pages, viewer_url,
+        )
 
-            # Start background translation if enabled
-            if TRANSLATION_ENABLED:
-                set_status(doc_id, "processing")
-                task = asyncio.create_task(
-                    _translate_document_background(doc_id, total_pages)
-                )
-                background_tasks[doc_id] = task
-            else:
-                set_status(doc_id, "complete")
+        response_pages = [
+            {
+                "index": pg["index"],
+                "markdown": (
+                    f"*Page {pg['index'] + 1} OCR in progress. "
+                    f"View full results at: {viewer_url}*"
+                ),
+                "dimensions": {
+                    "dpi": PDF_RENDER_DPI,
+                    "width": pg.get("width", 0),
+                    "height": pg.get("height", 0),
+                } if pg.get("width") else None,
+            }
+            for pg in page_images
+        ]
 
-            viewer_url = f"{VIEWER_BASE_URL}/view/{doc_id}"
-            logger.info(
-                f"[API] Viewer document {doc_id} created from /v1/ocr: "
-                f"{total_pages} pages, translation={'on' if TRANSLATION_ENABLED else 'off'}"
-            )
+        return {
+            "id": f"ocr-{uuid.uuid4().hex[:24]}",
+            "model": "mistral-ocr-latest",
+            "object": "ocr_response",
+            "pages": response_pages,
+            "document_id": doc_id,
+            "viewer_url": viewer_url,
+        }
+
     except Exception as e:
-        logger.error(f"[API] Failed to create viewer document from /v1/ocr: {e}")
-        # Non-critical — OCR response still valid
-
-    # ── Build Mistral-format response ─────────────────────
-    response_pages = []
-    for page in pages:
-        p = {"index": page["index"], "markdown": page["markdown"]}
-        if page.get("dimensions"):
-            p["dimensions"] = page["dimensions"]
-        response_pages.append(p)
-
-    response = {
-        "id": f"ocr-{uuid.uuid4().hex[:24]}",
-        "model": "mistral-ocr-latest",
-        "object": "ocr_response",
-        "pages": response_pages,
-    }
-
-    # Include viewer info so LLM can find it
-    if doc_id and viewer_url:
-        response["document_id"] = doc_id
-        response["viewer_url"] = viewer_url
-
-    return response
+        logger.error("[/v1/ocr] Unhandled error: %s", e, exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "object": "error",
+                "message": f"Internal server error: {e}",
+                "type": "internal_error",
+            },
+        )
 
 
 # ── Async OCR (incremental, with background translation) ─
@@ -425,6 +436,8 @@ async def _process_document_background(doc_id: str, total_pages: int):
         f"translation={'on' if TRANSLATION_ENABLED else 'off'})"
     )
 
+    has_errors = False
+
     for i in range(total_pages):
         try:
             img_bytes = load_page_image(doc_id, i)
@@ -432,6 +445,7 @@ async def _process_document_background(doc_id: str, total_pages: int):
                 update_page_ocr(
                     doc_id, i, "[Error: page image not found]", confidence=0.0
                 )
+                has_errors = True
                 continue
 
             async with semaphore:
@@ -440,7 +454,8 @@ async def _process_document_background(doc_id: str, total_pages: int):
             update_page_ocr(doc_id, i, text, confidence=0.0)
             del img_bytes
 
-            if TRANSLATION_ENABLED and text.strip():
+            # Only translate if we got real OCR text (not an error placeholder)
+            if TRANSLATION_ENABLED and text.strip() and not text.strip().startswith("[OCR error:") and not text.strip().startswith("[Error:"):
                 try:
                     translation = await translate_page(text)
                     update_page_translation(doc_id, i, translation)
@@ -453,12 +468,14 @@ async def _process_document_background(doc_id: str, total_pages: int):
         except Exception as e:
             logger.error(f"[Background] OCR failed for {doc_id} page {i}: {e}")
             update_page_ocr(doc_id, i, f"[OCR error: {e}]", confidence=0.0)
+            has_errors = True
 
     status = get_status(doc_id)
-    if status and status["status"] not in ("complete", "interrupted"):
-        set_status(doc_id, "complete")
+    if status and status["status"] not in ("complete", "interrupted", "failed"):
+        final_status = "failed" if has_errors else "complete"
+        set_status(doc_id, final_status)
 
-    logger.info(f"[Background] Processing complete for {doc_id}")
+    logger.info(f"[Background] Processing complete for {doc_id} (status={final_status})")
     background_tasks.pop(doc_id, None)
 
 

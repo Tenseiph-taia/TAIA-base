@@ -1,17 +1,17 @@
 [project]
 name = "taia-ocr"
 version = "0.4.0"
-description = "PaddleOCR-powered OCR MCP for TAIA"
+description = "Qwen3-VL-powered OCR MCP for TAIA"
 requires-python = ">=3.11"
-dependencies = [
+dependencies =[
     "mcp[cli]>=1.26.0",
     "fastapi>=0.115.0",
     "uvicorn>=0.42.0",
-    "paddlepaddle>=2.6.0",
-    "paddleocr==2.7.3",
+    "requests>=2.31.0",
     "opencv-python-headless>=4.8.0",
     "numpy==1.26.4",
     "pillow>=10.0.0",
+    "httpx>=0.27.0",
     "python-docx>=1.1.0",
     "python-multipart>=0.0.9",
     "PyMuPDF>=1.24.0",

@@ -220,30 +220,6 @@ body {
     50% { opacity: 0.6; }
 }
 
-/* Page Card Improvements */
-.page-card {
-    margin-bottom: 1rem;
-    scroll-margin-top: 1rem;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.page-number {
-    font-weight: 600;
-    color: var(--accent-primary);
-    font-size: 0.875rem;
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
     .header-right {
@@ -423,22 +399,211 @@ body {
     background: var(--accent-primary);
 }
 
-/* Page Content */
+/* ── Page Content & Markdown Rendering ───────────────────────────────────── */
+/*
+ * All rules are scoped to .page-content so they only affect rendered markdown
+ * inside page cards and cannot accidentally leak into the viewer chrome.
+ *
+ * marked.js output structure:
+ *   <p>            – paragraph (most prose content)
+ *   <pre><code>    – fenced code blocks (EXEC SQL, C code, aligned columns)
+ *   <code>         – inline code
+ *   <h1>–<h6>      – headings (rare in OCR output, but possible)
+ *   <ul>/<ol>/<li> – lists
+ *   <blockquote>   – blockquotes
+ *   <table>        – markdown tables (from core.py column detection)
+ *   <hr>           – horizontal rules (from --- in OCR output)
+ *   <strong>/<em>  – inline emphasis
+ */
+
 .page-content {
-    padding: 1.5rem;
-    font-family: var(--font-mono);
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+    padding: 1.25rem 1.5rem 1.5rem;
+    font-family: var(--font-sans);
+    font-size: 14px;          /* overridden per-card via inline style for zoom */
+    line-height: 1.75;
+    color: var(--text-primary);
+    /* Prevent very long unbroken strings (URLs, long OCR artifact words) from
+       overflowing the card. */
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
+
+/* ── Paragraphs ───────────────────────────────────────────────────────────── */
+
+.page-content p {
+    margin: 0 0 0.85em;
+    line-height: inherit;
+}
+.page-content p:last-child { margin-bottom: 0; }
+
+/* ── Headings ─────────────────────────────────────────────────────────────── */
+
+.page-content h1,
+.page-content h2,
+.page-content h3,
+.page-content h4,
+.page-content h5,
+.page-content h6 {
+    margin: 1.4em 0 0.5em;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--accent-primary);
+}
+.page-content h1 {
+    font-size: 1.45em;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.25em;
+}
+.page-content h2 {
+    font-size: 1.25em;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.2em;
+}
+.page-content h3  { font-size: 1.1em; }
+.page-content h4,
+.page-content h5,
+.page-content h6  { font-size: 1em; color: var(--text-secondary); }
+
+/* First heading in a card gets no top margin — the card padding is enough. */
+.page-content > h1:first-child,
+.page-content > h2:first-child,
+.page-content > h3:first-child { margin-top: 0; }
+
+/* ── Code ─────────────────────────────────────────────────────────────────── */
+
+/*
+ * Inline code — used for short identifiers, variable names, etc.
+ */
+.page-content code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: rgba(51, 65, 85, 0.6);
+    color: #93c5fd;             /* light blue — distinguishable but not harsh */
+    padding: 0.15em 0.35em;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+}
+
+/*
+ * Fenced code blocks — used by core.py for:
+ *   - Actual SQL / C / Pro*C code snippets
+ *   - Table-of-contents pages where column alignment was detected as "code"
+ *
+ * Design goal: readable as document content, not overpowering like a full IDE
+ * code block. Lighter background, slightly smaller font, subtle left border.
+ */
+.page-content pre {
+    margin: 0.75em 0 1em;
+    padding: 0.875rem 1rem;
+    background: rgba(15, 23, 42, 0.6);   /* slightly darker than card bg */
+    border: 1px solid var(--border-color);
+    border-left: 3px solid #334155;       /* subtle accent, not the loud blue */
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    line-height: 1.55;
+}
+.page-content pre code {
+    /* Reset the inline-code styles — pre already provides the container. */
+    background  : transparent;
+    color       : var(--text-primary);
+    padding     : 0;
+    font-size   : 0.875em;
+    white-space : pre;
+    border-radius: 0;
+}
+.page-content pre:last-child { margin-bottom: 0; }
+
+/* ── Lists ────────────────────────────────────────────────────────────────── */
+
+.page-content ul,
+.page-content ol {
+    margin: 0.5em 0 0.85em;
+    padding-left: 1.75em;
+}
+.page-content li {
+    margin-bottom: 0.3em;
+    line-height: 1.65;
+}
+.page-content li:last-child { margin-bottom: 0; }
+.page-content ul              { list-style-type: disc; }
+.page-content ul ul           { list-style-type: circle; margin: 0.2em 0 0.2em; }
+.page-content ol              { list-style-type: decimal; }
+
+/* ── Blockquotes ──────────────────────────────────────────────────────────── */
+
+.page-content blockquote {
+    margin: 0.75em 0 1em;
+    padding: 0.6rem 1rem;
+    border-left: 3px solid var(--accent-primary);
+    background: rgba(59, 130, 246, 0.06);
+    border-radius: 0 0.25rem 0.25rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.page-content blockquote p { margin-bottom: 0; }
+
+/* ── Horizontal Rules ─────────────────────────────────────────────────────── */
+/*
+ * --- in OCR output often represents a physical ruled line on the page
+ * (section dividers, table borders, etc.). Give it a visible but quiet style.
+ */
+.page-content hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 1.25em 0;
+    opacity: 0.6;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+
+.page-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75em 0 1em;
+    font-size: 0.9em;
+    /* Tables from OCR can be wider than the panel — scroll rather than overflow. */
+    display: block;
+    overflow-x: auto;
+}
+.page-content th,
+.page-content td {
+    border: 1px solid var(--border-color);
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+    white-space: normal;
+}
+.page-content th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.page-content tr:nth-child(even) { background: rgba(51, 65, 85, 0.25); }
+.page-content table:last-child    { margin-bottom: 0; }
+
+/* ── Inline emphasis ──────────────────────────────────────────────────────── */
+
+.page-content strong { font-weight: 700; }
+.page-content em     { font-style: italic; }
+.page-content s,
+.page-content del    { text-decoration: line-through; color: var(--text-secondary); }
+
+.page-content a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.page-content a:hover { color: #60a5fa; }
+
+/* ── Images inside markdown content (not the original-panel thumbnails) ────── */
 
 .page-content img {
     max-width: 100%;
     height: auto;
     display: block;
-    margin: 1rem 0;
+    margin: 0.75rem 0;
     border-radius: 0.25rem;
+    border: 1px solid var(--border-color);
 }
 
 /* Loading States */
@@ -646,4 +811,143 @@ body {
 
 .mb-2 {
     margin-bottom: 0.5rem;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   LIGHTBOX STYLES (from viewer.js injectLightboxStyles)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+#imageLightbox.lb-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 9000;
+    animation: lb-fade-in 0.15s ease;
+}
+
+#imageLightbox.lb-overlay.hidden {
+    display: none;
+}
+
+@keyframes lb-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Stage fills the entire overlay; handles all input */
+#lbStage.lb-stage {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: grab;
+}
+
+#lbStage.lb-stage.dragging {
+    cursor: grabbing;
+}
+
+/* Line height class for page content */
+.page-content-line-height {
+    line-height: 1.6;
+}
+
+/* Image container class */
+.img-container {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Image is absolutely positioned; all movement via transform */
+#lbStage.lb-stage img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none; /* stage handles events, not the image */
+    max-width: none;
+}
+
+/* Toolbar floats above the stage */
+#imageLightbox .lb-toolbar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 9001;
+    background: rgba(15, 23, 42, 0.88);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #475569;
+    pointer-events: all;
+}
+
+#imageLightbox .lb-zoom-label {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    min-width: 52px;
+    text-align: center;
+}
+
+#imageLightbox .lb-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid #475569;
+    background: #334155;
+    color: #f1f5f9;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+#imageLightbox .lb-btn:hover {
+    background: #475569;
+}
+
+#imageLightbox .lb-btn-close {
+    background: #7f1d1d;
+    border-color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+#imageLightbox .lb-btn-close:hover {
+    background: #991b1b;
+}
+
+/* Hint bar at the bottom */
+#imageLightbox .lb-hint {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.72rem;
+    color: #475569;
+    pointer-events: none;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ORIGINAL PANEL IMAGE STYLES (from viewer.js inline styles)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Thumbnail images in original panel become clickable */
+#originalContent .page-content img {
+    cursor: zoom-in;
+    transition: opacity 0.15s;
+}
+
+#originalContent .page-content img:hover {
+    opacity: 0.82;
 }

@@ -5,10 +5,10 @@ from mcp.server.fastmcp import FastMCP
 
 from ocr.core import ocr_image_bytes
 from ocr.rate_limit import check_rate_limit
-from ocr.config import OCR_CONCURRENCY, API_BASE_URL
+from ocr.config import VLM_OCR_CONCURRENCY, API_BASE_URL
 
 mcp = FastMCP("TAIA-OCR", host="0.0.0.0", port=8003)
-semaphore = asyncio.Semaphore(OCR_CONCURRENCY)
+semaphore = asyncio.Semaphore(VLM_OCR_CONCURRENCY)
 
 
 def _strip_data_url(data: str) -> str:

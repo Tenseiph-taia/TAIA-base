@@ -38,7 +38,12 @@ class DocumentViewer {
         }
 
         this.showLoading();
-        
+
+        // Configure marked once here — never inside renderContent.
+        // breaks:false — core.py uses double-newlines for paragraph breaks;
+        // breaks:true would turn every OCR line-end into a <br>.
+        marked.use({ gfm: true, breaks: false });
+
         try {
             await this.loadDocument();
             this.hideLoading();
@@ -138,7 +143,7 @@ class DocumentViewer {
                     ${lang === 'en' ? `<span class="status-indicator ${page.translation_done ? 'translation-done' : ''}">Translation</span>` : ''}
                 </div>
             </div>
-            <div class="page-content" style="font-size: ${this.zoomLevel}px; line-height: 1.6;" data-page-idx="${index}">
+            <div class="page-content page-content-line-height" style="font-size: ${this.zoomLevel}px;" data-page-idx="${index}">
                 ${this.renderContent(content, page, lang)}
             </div>
         `;
@@ -168,7 +173,7 @@ class DocumentViewer {
                 <img src="${imgSrc}"
                      alt="${imgAlt}"
                      loading="lazy"
-                     style="max-width:100%;height:auto;display:block;"
+                     class="img-container"
                      onerror="this.parentElement.innerHTML='<div class=\\'error-message\\'>Image not available</div>'">
             </div>
         `;
@@ -182,7 +187,8 @@ class DocumentViewer {
     }
 
     /**
-     * Render content based on state
+     * Render page content as sanitized HTML.
+     * Pipeline: raw markdown → normalizeMarkdown() → marked.parse() → DOMPurify
      */
     renderContent(content, page, lang) {
         if (!content || content.trim() === '') {
@@ -195,17 +201,60 @@ class DocumentViewer {
             return '<div class="error-message">No content available</div>';
         }
 
-        // Escape HTML to prevent XSS
-        return this.escapeHtml(content);
+        const rawHtml = marked.parse(this.normalizeMarkdown(content));
+
+        return DOMPurify.sanitize(rawHtml, {
+            ALLOWED_TAGS: [
+                'p', 'br', 'strong', 'em', 'u', 's', 'del',
+                'code', 'pre',
+                'ul', 'ol', 'li',
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'blockquote', 'hr',
+                'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                'span', 'div', 'a',
+            ],
+            ALLOWED_ATTR: ['class', 'style', 'href', 'target', 'rel'],
+        });
     }
 
     /**
-     * Escape HTML special characters
+     * Fix translation-broken markdown tables before handing to marked.
+     *
+     * The LLM translator receives a well-formed table (rows joined by \n) and
+     * outputs the translation with blank lines inserted between rows:
+     *
+     *   | A | B |          ← header row
+     *   | --- | --- |      ← separator          ← correctly contiguous
+     *                      ← blank line added by LLM
+     *   | --- | --- |      ← duplicate separator (LLM preserved original)
+     *                      ← blank line added by LLM
+     *   | C | D |          ← body row
+     *
+     * marked.js ends a table block at the first blank line, so every row after
+     * a gap becomes a literal <p>| C | D |</p>.
+     *
+     * Fix in two stages:
+     *   1. Collapse blank lines between consecutive pipe rows (runs the regex
+     *      twice because a single pass can't overlap the same characters).
+     *   2. Deduplicate consecutive pure-separator rows  (| :?-+:? | patterns)
+     *      that appear in the body — the LLM often re-emits the original
+     *      | --- | separator as a literal data row.
      */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    normalizeMarkdown(text) {
+        // Stage 1 — collapse blank lines between pipe rows.
+        const gapRe = /(^[ \t]*\|[^\n]*)\n\n+([ \t]*\|)/gm;
+        let out = text.replace(gapRe, '$1\n$2');
+            out = out.replace(gapRe, '$1\n$2'); // second pass for 3+ blank lines
+
+        // Stage 2 — remove duplicate separator rows.
+        // A separator row is a line whose cells are only dashes/colons/spaces.
+        // After Stage 1 the table is contiguous; we only need to strip any
+        // additional | --- | row that follows the real separator.
+        // Pattern: separator row followed immediately by another separator row.
+        const sepRe = /^([ \t]*\|(?:[ \t]*:?-+:?[ \t]*\|)+[ \t]*)\n(?=[ \t]*\|(?:[ \t]*:?-+:?[ \t]*\|)+[ \t]*$)/gm;
+        out = out.replace(sepRe, '');
+
+        return out;
     }
 
     /**
@@ -333,131 +382,7 @@ class DocumentViewer {
         this.syncScrollEnabled = enabled;
     }
 
-    // ─── Image Lightbox ───────────────────────────────────────────────────────
-    //
-    // A free-form pan + zoom viewer for the original document images.
-    //
-    // Architecture:
-    //   - A full-screen overlay (.lb-overlay) contains a stage div (.lb-stage)
-    //     that fills the entire viewport and catches all pointer/wheel events.
-    //   - The image sits inside the stage with transform-origin: 0 0. Its
-    //     position is controlled entirely by a single CSS transform:
-    //       translate(panX px, panY px) scale(scale)
-    //     This keeps the math simple and avoids fighting the browser layout.
-    //   - Cursor-centred wheel zoom: the image point under the cursor stays
-    //     fixed as scale changes. Formula:
-    //       newPanX = cursorX + (panX - cursorX) * (newScale / oldScale)
-    //   - Drag pan: on mousedown record startXY and origin panXY; on mousemove
-    //     write panX/Y = originX/Y + (currentXY - startXY). Released on mouseup
-    //     anywhere on window so fast drags don't "lose" the cursor.
-
-    injectLightboxStyles() {
-        if (document.getElementById('lightbox-styles')) return;
-        const style = document.createElement('style');
-        style.id = 'lightbox-styles';
-        style.textContent = `
-            .lb-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.92);
-                z-index: 9000;
-                animation: lb-fade-in 0.15s ease;
-            }
-            .lb-overlay.hidden { display: none; }
-            @keyframes lb-fade-in { from { opacity:0 } to { opacity:1 } }
-
-            /* Stage fills the entire overlay; handles all input */
-            .lb-stage {
-                position: absolute;
-                inset: 0;
-                overflow: hidden;
-                cursor: grab;
-            }
-            .lb-stage.dragging { cursor: grabbing; }
-
-            /* Image is absolutely positioned; all movement via transform */
-            .lb-stage img {
-                position: absolute;
-                top: 0;
-                left: 0;
-                transform-origin: 0 0;
-                user-select: none;
-                -webkit-user-drag: none;
-                pointer-events: none; /* stage handles events, not the image */
-                max-width: none;
-            }
-
-            /* Toolbar floats above the stage */
-            .lb-toolbar {
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                z-index: 9001;
-                background: rgba(15,23,42,0.88);
-                padding: 0.5rem 0.75rem;
-                border-radius: 0.5rem;
-                border: 1px solid #475569;
-                pointer-events: all;
-            }
-            .lb-zoom-label {
-                font-family: 'Fira Code', monospace;
-                font-size: 0.8rem;
-                color: #94a3b8;
-                min-width: 52px;
-                text-align: center;
-            }
-            .lb-btn {
-                width: 2rem;
-                height: 2rem;
-                border: 1px solid #475569;
-                background: #334155;
-                color: #f1f5f9;
-                border-radius: 0.375rem;
-                cursor: pointer;
-                font-size: 1.1rem;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background 0.15s;
-                flex-shrink: 0;
-            }
-            .lb-btn:hover { background: #475569; }
-            .lb-btn-close {
-                background: #7f1d1d;
-                border-color: #ef4444;
-                margin-left: 0.25rem;
-            }
-            .lb-btn-close:hover { background: #991b1b; }
-
-            /* Hint bar at the bottom */
-            .lb-hint {
-                position: absolute;
-                bottom: 1rem;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 0.72rem;
-                color: #475569;
-                pointer-events: none;
-                white-space: nowrap;
-                letter-spacing: 0.03em;
-            }
-
-            /* Thumbnail images in original panel become clickable */
-            #originalContent .page-content img {
-                cursor: zoom-in;
-                transition: opacity 0.15s;
-            }
-            #originalContent .page-content img:hover { opacity: 0.82; }
-        `;
-        document.head.appendChild(style);
-    }
-
     setupImageLightbox() {
-        this.injectLightboxStyles();
 
         const overlay = document.createElement('div');
         overlay.id        = 'imageLightbox';
