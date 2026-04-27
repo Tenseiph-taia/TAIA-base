@@ -22,4 +22,11 @@ COPY main.py .
 
 EXPOSE 8000
 
+# Probe the SSE endpoint. FastMCP serves an HTTP response on GET /sse even
+# for non-EventSource clients, which is enough to confirm the process is up
+# and the event loop is accepting connections.
+# --start-period gives the server time to initialise before the first check.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD curl -sf http://localhost:8000/sse > /dev/null || exit 1
+
 CMD ["uv", "run", "python", "main.py"]
