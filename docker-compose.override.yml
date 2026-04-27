@@ -227,6 +227,50 @@ services:
       ollama:
         condition: service_healthy
 
+  # Browser Harness MCP
+  taia-browser-harness:
+    build: ./mcps/browser-harness
+    container_name: taia-browser-harness
+    restart: unless-stopped
+    ports:
+      - "8005:8005"
+    environment:
+      BROWSER_HEADLESS: "true"
+      BROWSER_LIVE_PUBLIC_URL: "http://localhost:8005/live.mjpeg"
+      BROWSER_MAX_SESSIONS: "150"
+      BROWSER_SESSION_TIMEOUT_MINUTES: "60"
+      BROWSER_VIEWPORT_WIDTH: "1280"
+      BROWSER_VIEWPORT_HEIGHT: "900"
+      BROWSER_SCREENSHOT_MAX_WIDTH: "1280"
+      BROWSER_DEFAULT_TIMEOUT_MS: "10000"
+      BROWSER_NAVIGATION_TIMEOUT_MS: "30000"
+      BROWSER_RATE_LIMIT_MAX: "500"
+      BROWSER_RATE_LIMIT_REFILL: "50.0"
+      BROWSER_BURST_LIMIT_MAX: "100"
+      BROWSER_BURST_LIMIT_WINDOW: "60"
+    networks:
+      - default
+    shm_size: "2gb"
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=512M
+      - /run:mode=1777,size=64M
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "12.0"
+          memory: "48G"
+        reservations:
+          cpus: "6.0"
+          memory: "24G"
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+
   # PRODUCTION: vLLM
   vllm:
     image: vllm/vllm-openai:latest

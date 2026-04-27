@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useRecoilValue } from 'recoil';
 import { Button } from '@librechat/client';
 import { TriangleAlert } from 'lucide-react';
@@ -15,8 +15,71 @@ import { useMCPIconMap } from '~/hooks/MCP';
 import { AttachmentGroup } from './Parts';
 import ToolCallInfo from './ToolCallInfo';
 import ProgressText from './ProgressText';
+import BrowserViewport from '../../BrowserViewport';
 import { logger } from '~/utils';
 import store from '~/store';
+
+// Module-level URL tracker: only the most recent mount per URL stays active
+const _viewportRegistry = new Map<string, { id: number; deactivate: () => void }>();
+let _viewportIdCounter = 0;
+
+function BrowserToolViewport({ output }: { output?: string | null | any[] }) {
+  const { liveUrl, viewportWidth, viewportHeight } = useMemo(() => {
+    if (!output) return { liveUrl: null, viewportWidth: 1280, viewportHeight: 900 };
+
+    let textToParse: string | null = null;
+    if (Array.isArray(output)) {
+      textToParse = output.find((o: any) => typeof o === 'string') || null;
+    } else if (typeof output === 'string') {
+      textToParse = output;
+    }
+
+    if (!textToParse) return { liveUrl: null, viewportWidth: 1280, viewportHeight: 900 };
+
+    try {
+      const parsed = JSON.parse(textToParse);
+      return {
+        liveUrl: parsed.live_viewport_url || null,
+        viewportWidth: parsed.viewport_width || 1280,
+        viewportHeight: parsed.viewport_height || 900,
+      };
+    } catch {
+      return { liveUrl: null, viewportWidth: 1280, viewportHeight: 900 };
+    }
+  }, [output]);
+
+  const [isActive, setIsActive] = useState(false);
+  const myId = useRef(++_viewportIdCounter);
+
+  useEffect(() => {
+    if (!liveUrl) return;
+
+    // Deactivate the previous owner of this URL
+    const prev = _viewportRegistry.get(liveUrl);
+    if (prev && prev.id !== myId.current) {
+      prev.deactivate();
+    }
+
+    // Register self as the active owner
+    _viewportRegistry.set(liveUrl, { id: myId.current, deactivate: () => setIsActive(false) });
+    setIsActive(true);
+
+    return () => {
+      const current = _viewportRegistry.get(liveUrl);
+      if (current && current.id === myId.current) {
+        _viewportRegistry.delete(liveUrl);
+      }
+    };
+  }, [liveUrl]);
+
+  if (!liveUrl || !isActive) return null;
+
+  return (
+    <div style={{ marginTop: '12px', maxWidth: '720px' }}>
+      <BrowserViewport url={liveUrl} viewportWidth={viewportWidth} viewportHeight={viewportHeight} />
+    </div>
+  );
+}
 
 export default function ToolCall({
   initialProgress = 0.1,
@@ -236,6 +299,7 @@ export default function ToolCall({
           )}
         </div>
       </div>
+      {function_name.startsWith('browser_') && <BrowserToolViewport output={output} />}
       {auth != null && auth && progress < 1 && !showCancelled && (
         <div className="flex w-full flex-col gap-2.5">
           <div className="mb-1 mt-2">
