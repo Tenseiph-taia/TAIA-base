@@ -101,7 +101,7 @@ services:
       - PYTHONUNBUFFERED=1
       - LIBRECHAT_URL=http://api:3080
       - AGENT_ID=agent_taia_default
-      - API_KEY=sk-7de36a986dd661c46f053d3c2e0fc3e334474716f7890435ee0bba4b31ab1210
+      - API_KEY=api-key-here
     ports:
       - "8001:8001"   # Admin panel calls this from the browser
     networks:
