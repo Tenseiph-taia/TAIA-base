@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import styles from './BrowserViewport.module.css';
 
 interface Props {
   url: string;
@@ -26,45 +27,24 @@ export default function BrowserViewport({ url, viewportWidth = 1280, viewportHei
 
   if (error) {
     return (
-      <div style={{
-        width: '100%', height: '60px', background: '#1a1a1a', borderRadius: '8px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#ff5555', fontSize: '12px', border: '1px solid #333',
-      }}>
+      <div className={styles.errorContainer}>
         Browser session inactive
       </div>
     );
   }
 
   return (
-    <div style={{
-      position: 'relative', width: '100%', borderRadius: '8px',
-      overflow: 'hidden', border: '1px solid #444',
-    }}>
+    <div className={styles.container}>
       {/* Live badge */}
-      <div style={{
-        position: 'absolute', top: '8px', left: '8px', zIndex: 2,
-        background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '2px 8px',
-        borderRadius: '4px', fontSize: '11px', display: 'flex',
-        alignItems: 'center', gap: '6px', userSelect: 'none',
-      }}>
-        <span style={{
-          width: '6px', height: '6px', background: '#ff3366',
-          borderRadius: '50%', display: 'inline-block',
-          animation: 'pulse 1.4s ease-in-out infinite',
-        }} />
+      <div className={styles.liveBadge}>
+        <span className={styles.liveIndicator} />
         LIVE
       </div>
 
       {/* Pop-out button */}
       <button
         onClick={() => window.open(url, '_blank', 'width=1280,height=900')}
-        style={{
-          position: 'absolute', top: '8px', right: '8px', zIndex: 2,
-          background: 'rgba(0,0,0,0.75)', color: '#fff', border: 'none',
-          padding: '2px 8px', borderRadius: '4px', fontSize: '11px',
-          cursor: 'pointer',
-        }}
+        className={styles.popOutButton}
       >
         ↗ Pop out
       </button>
@@ -75,33 +55,20 @@ export default function BrowserViewport({ url, viewportWidth = 1280, viewportHei
         alt="Live browser viewport"
         onClick={handleImageClick}
         onError={() => setError(true)}
-        style={{ width: '100%', display: 'block', background: '#000', cursor: 'crosshair' }}
+        className={styles.browserImage}
       />
 
       {tooltip && (
-        <div style={{
-          position: 'absolute',
-          left: tooltip.x + 12,
-          top: tooltip.y - 28,
-          zIndex: 3,
-          background: 'rgba(0,0,0,0.85)',
-          color: '#fff',
-          padding: '4px 10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-        }}>
+        <div 
+          className={styles.tooltip}
+          style={{
+            left: tooltip.x + 12,
+            top: tooltip.y - 28,
+          }}
+        >
           {tooltip.text}
         </div>
       )}
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-      `}</style>
     </div>
   );
 }
