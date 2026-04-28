@@ -172,3 +172,4 @@ CLAUDE.md
 .gsd
 /.openclaude
 cline_mcp_settings.json
+/mcps/browser-harness/__pycache__

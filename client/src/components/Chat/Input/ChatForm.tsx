@@ -192,6 +192,18 @@ const ChatForm = memo(function ChatForm({
   }, [textValue]);
 
   useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.text) {
+        methods.setValue('text', detail.text, { shouldValidate: true });
+        textAreaRef.current?.focus();
+      }
+    };
+    window.addEventListener('browser-coordinate-click', handler);
+    return () => window.removeEventListener('browser-coordinate-click', handler);
+  }, [methods]);
+
+  useEffect(() => {
     if (isEditingBadges && backupBadges.length === 0) {
       setBackupBadges([...badges]);
     }
