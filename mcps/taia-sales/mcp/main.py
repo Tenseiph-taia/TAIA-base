@@ -54,14 +54,23 @@ def _init_db() -> None:
                 "INSERT INTO products (name, sku, price, stock_quantity, description) VALUES (?, ?, ?, ?, ?)",[
                     ("Vertex Hub Pro",       "NGS-VHP-01",  1450.00,    50, "Centralized smart building controller with AI optimization"),
                     ("Omni-Link Mesh Node",  "NGS-OLN-05",   320.00,   200, "Industrial-grade mesh networking node for large-scale IoT"),
-                    ("SkyStream Analytics",  "NGS-SSA-YR",   899.00, 9999, "Annual subscription for real-time sensor data visualization"),
-                    ("Nexus Core Dev-Kit",   "NGS-CDK-02",   199.00,   100, "Advanced prototyping kit for custom grid automation"),
+                    ("SkyStream Analytics", "NGS-SSA-YR",   899.00, 9999, "Annual subscription for real-time sensor data visualization"),
+                    ("Nexus Core Dev-Kit",   "NGS-CDK-02",   199.00,  100, "Advanced prototyping kit for custom grid automation"),
                 ],
             )
         conn.commit()
     logger.info(f"[Nexus-Sales] Database ready at {DB_PATH}")
 
+def _configure_sqlite(conn: sqlite3.Connection) -> None:
+    """Configure SQLite for concurrent access with WAL mode."""
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+
+# Initialize database first, then apply SQLite hardening
 _init_db()
+with _conn() as conn:
+    _configure_sqlite(conn)
 
 _BANNED_KEYWORDS = {"INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", "ATTACH", "DETACH", "PRAGMA", "VACUUM"}
 
@@ -172,4 +181,11 @@ async def get_order_status(order_id: int) -> str:
     except Exception as e: return f"Lookup failed: {e}"
 
 if __name__ == "__main__":
-    mcp.run(transport="sse")
+    import concurrent.futures
+
+    async def main():
+        loop = asyncio.get_running_loop()
+        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=20))
+        await mcp.run(transport="sse")
+
+    asyncio.run(main())

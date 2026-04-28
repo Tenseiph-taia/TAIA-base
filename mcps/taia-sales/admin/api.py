@@ -9,8 +9,10 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="Nexus Admin API", version="1.0.0")
@@ -20,15 +22,31 @@ logging.basicConfig(level=logging.INFO)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 DB_PATH = Path(os.getenv("DB_PATH", "/app/data/sales_demo.db"))
+LIBRECHAT_URL = os.getenv("LIBRECHAT_URL", "http://localhost:3080")
+AGENT_ID = os.getenv("AGENT_ID", "agent_taia_default")
+API_KEY = os.getenv("API_KEY", "sk-...")
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 
+def _configure_sqlite(conn: sqlite3.Connection) -> None:
+    """Configure SQLite for concurrent access with WAL mode."""
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+
+class ChatRequest(BaseModel):
+    messages: list[dict]
+
 def _conn() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+# Initialize and configure SQLite
+with _conn() as conn:
+    _configure_sqlite(conn)
 
 def send_approval_email(customer_email: str, order_id: int, product_name: str, notes: str):
     if not SMTP_USER or not SMTP_PASS: return
@@ -150,6 +168,51 @@ async def list_products():
         with _conn() as conn: return[dict(r) for r in conn.execute("SELECT * FROM products ORDER BY name").fetchall()]
     return await asyncio.to_thread(_run)
 
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """Proxy streaming chat requests to LibreChat API."""
+    async def event_generator():
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    "Authorization": f"Bearer {API_KEY}",
+                    "Content-Type": "application/json",
+                }
+                payload = {
+                    "messages": request.messages,
+                    "stream": True,
+                    "model": AGENT_ID,
+                }
+                async with client.stream(
+                    "POST",
+                    f"{LIBRECHAT_URL}/api/agents/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=60.0,
+                ) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if line:
+                            if line.startswith('data: '):
+                                yield f"{line}\n\n"
+                            else:
+                                yield f"data: {line}\n\n"
+        except Exception as e:
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
+        yield "data: [DONE]\n\n"
+    
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    import asyncio
+    import concurrent.futures
+    from uvicorn import Config, Server
+
+    async def serve():
+        loop = asyncio.get_running_loop()
+        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=20))
+        config = Config(app, host="0.0.0.0", port=8001)
+        server = Server(config)
+        await server.serve()
+
+    asyncio.run(serve())
