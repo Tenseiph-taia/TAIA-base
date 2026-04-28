@@ -16,7 +16,7 @@ from ddgs import DDGS
 from markdownify import markdownify as md
 from youtube_transcript_api import YouTubeTranscriptApi
 from pypdf import PdfReader
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 # ── FastMCP init ───────────────────────────────────────────────────────────────
 mcp = FastMCP("TAIA-Web-Tools", host="0.0.0.0", port=8000)
@@ -24,16 +24,32 @@ logger = logging.getLogger("taia-web")
 logging.basicConfig(level=logging.INFO)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-TAVILY_API_KEY  = os.getenv("TAVILY_API_KEY")
-PDF_MAX_BYTES   = 50 * 1024 * 1024
+TAVILY_API_KEY     = os.getenv("TAVILY_API_KEY")
+PDF_MAX_BYTES      = 50 * 1024 * 1024
 MARKDOWN_MAX_CHARS = 250_000
+
+# Max concurrent Chromium instances. Each process uses ~150–300 MB RAM.
+# 5 concurrent × 300 MB = 1.5 GB ceiling — safe headroom alongside the rest of
+# the TAIA stack. Callers beyond this cap queue and wait.
+_BROWSER_CONCURRENCY = int(os.getenv("BROWSER_CONCURRENCY", "5"))
+_browser_semaphore: asyncio.Semaphore | None = None
+
+def _get_browser_semaphore() -> asyncio.Semaphore:
+    """
+    Lazy singleton — created on first use inside a running event loop.
+    Avoids the module-level initialisation race on older asyncio internals.
+    """
+    global _browser_semaphore
+    if _browser_semaphore is None:
+        _browser_semaphore = asyncio.Semaphore(_BROWSER_CONCURRENCY)
+    return _browser_semaphore
 
 # ── Browser headers ────────────────────────────────────────────────────────────
 BROWSER_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/136.0.0.0 Safari/537.36"
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
@@ -101,20 +117,62 @@ async def _is_url_safe(url: str) -> bool:
         return False  # resolution failure = unsafe
 
 
+async def _safe_http_stream(url: str, *, max_redirects: int = 5) -> tuple[str, "httpx.Response"]:
+    """
+    Streams a GET request with SSRF-safe manual redirect following.
+
+    httpx's built-in follow_redirects=True performs no SSRF check on each hop.
+    A public URL that 301s to an internal address would bypass _is_url_safe.
+    This function re-validates every redirect target before following it.
+
+    Returns (final_url, response) with the stream open — caller must use
+    this inside an outer httpx.AsyncClient context or handle cleanup.
+    """
+    client = httpx.AsyncClient(
+        follow_redirects=False,
+        timeout=30.0,
+        headers=BROWSER_HEADERS,
+    )
+    current_url = url
+    try:
+        for _ in range(max_redirects + 1):
+            resp = await client.send(client.build_request("GET", current_url), stream=True)
+            if not resp.is_redirect:
+                return current_url, resp
+            await resp.aclose()
+            location = resp.headers.get("location", "")
+            if not location.startswith(("http://", "https://")):
+                location = urljoin(current_url, location)
+            if not await _is_url_safe(location):
+                await client.aclose()
+                raise ValueError(f"Redirect to restricted address blocked: {location}")
+            current_url = location
+        await client.aclose()
+        raise ValueError(f"Too many redirects (>{max_redirects}): {url}")
+    except Exception:
+        await client.aclose()
+        raise
+
+
 # ── Rate Limiter (Token Bucket) ────────────────────────────────────────────────
 class TokenBucketLimiter:
     """
     Token bucket — queues excess callers, never drops them.
-    FIX: sleep is computed inside the lock but executed OUTSIDE it,
-    so other callers are never frozen while we wait.
+
+    Each acquire() reserves a token slot immediately (tokens can go negative),
+    so concurrent waiters compute staggered sleep durations and wake
+    one-by-one instead of bursting simultaneously when the bucket refills.
+
+    Sleep is computed inside the lock but executed OUTSIDE it, so other
+    callers are never frozen while we wait.
     """
     def __init__(self, rate: float, capacity: int):
-        self.rate = rate
+        self.rate     = rate
         self.capacity = capacity
-        self._tokens = float(capacity)
+        self._tokens      = float(capacity)
         self._last_refill = time.monotonic()
-        self._lock = asyncio.Lock()
-        self._semaphore = asyncio.Semaphore(capacity)
+        self._lock        = asyncio.Lock()
+        self._semaphore   = asyncio.Semaphore(capacity)
 
     async def acquire(self):
         await self._semaphore.acquire()
@@ -127,8 +185,10 @@ class TokenBucketLimiter:
             )
             self._last_refill = now
             if self._tokens < 1:
+                # FIX: reserve the slot by going negative — each concurrent waiter
+                # therefore computes a larger (staggered) wait, preventing burst.
                 wait = (1 - self._tokens) / self.rate
-                self._tokens = 0
+                self._tokens -= 1
             else:
                 self._tokens -= 1
         if wait > 0:
@@ -170,6 +230,11 @@ def _fetch_transcript(video_id: str) -> str:
     raise RuntimeError("No transcripts found for this video.")
 
 
+# Total wall-clock ceiling for any single scrape (navigation + JS settle +
+# screenshot). Prevents a hung page from holding a browser slot indefinitely.
+_SCRAPE_TIMEOUT_SECONDS = float(os.getenv("SCRAPE_TIMEOUT_SECONDS", "35"))
+
+
 async def _scrape_with_playwright(
     url: str,
     capture_screenshot: bool = False,
@@ -177,38 +242,59 @@ async def _scrape_with_playwright(
     """
     Returns (markdown, screenshot_bytes | None).
     Screenshot only rendered when capture_screenshot=True — skipping it on
-    plain read_url_content saves ~40-80ms CPU + RAM per call.
+    plain read_url_content saves ~40–80ms CPU + RAM per call.
+
+    Concurrency is capped by _browser_semaphore. The browser is guaranteed
+    to be closed via try/finally even if an exception occurs mid-scrape.
+    The entire operation is bounded by _SCRAPE_TIMEOUT_SECONDS.
     """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage"],
-        )
-        context = await browser.new_context(
-            user_agent=BROWSER_HEADERS["User-Agent"],
-            locale="en-US",
-            timezone_id="Asia/Manila",
-            extra_http_headers={k: v for k, v in BROWSER_HEADERS.items() if k != "User-Agent"},
-            viewport={"width": 1280, "height": 800},
-        )
-        page = await context.new_page()
-        await Stealth().apply_stealth_async(page)
-        await page.goto(url, wait_until="domcontentloaded", timeout=20_000)
-        await asyncio.sleep(1)
+    async def _inner() -> tuple[str, bytes | None]:
+        async with _get_browser_semaphore():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage"],
+                )
+                try:
+                    context = await browser.new_context(
+                        user_agent=BROWSER_HEADERS["User-Agent"],
+                        locale="en-US",
+                        timezone_id="Asia/Manila",
+                        extra_http_headers={
+                            k: v for k, v in BROWSER_HEADERS.items()
+                            if k != "User-Agent"
+                        },
+                        viewport={"width": 1280, "height": 800},
+                    )
+                    page = await context.new_page()
+                    await Stealth().apply_stealth_async(page)
+                    await page.goto(url, wait_until="domcontentloaded", timeout=20_000)
 
-        html = await page.evaluate("document.body.innerHTML")
-        screenshot_bytes = (
-            await page.screenshot(type="png", full_page=False)
-            if capture_screenshot else None
-        )
-        await browser.close()
+                    # Wait for network to settle; ignore timeout — some pages never
+                    # reach networkidle (infinite polling, ads, etc.)
+                    try:
+                        await page.wait_for_load_state("networkidle", timeout=5_000)
+                    except Exception:
+                        pass
 
-    markdown = md(html, heading_style="ATX", strip=["script", "style", "nav", "footer"])
-    markdown = re.sub(r"\n{3,}", "\n\n", markdown).strip()
-    if len(markdown) > MARKDOWN_MAX_CHARS:
-        markdown = markdown[:MARKDOWN_MAX_CHARS] + "\n\n[... truncated at 50,000 chars]"
+                    html = await page.evaluate("document.body.innerHTML")
+                    screenshot_bytes = (
+                        await page.screenshot(type="png", full_page=False)
+                        if capture_screenshot else None
+                    )
+                finally:
+                    # Guaranteed close — prevents orphaned Chromium processes
+                    # on any exception path (timeout, page error, stealth failure).
+                    await browser.close()
 
-    return markdown, screenshot_bytes
+        markdown = md(html, heading_style="ATX", strip=["script", "style", "nav", "footer"])
+        markdown = re.sub(r"\n{3,}", "\n\n", markdown).strip()
+        if len(markdown) > MARKDOWN_MAX_CHARS:
+            markdown = markdown[:MARKDOWN_MAX_CHARS] + "\n\n[... truncated at 50,000 chars]"
+
+        return markdown, screenshot_bytes
+
+    return await asyncio.wait_for(_inner(), timeout=_SCRAPE_TIMEOUT_SECONDS)
 
 
 # ── Tools ──────────────────────────────────────────────────────────────────────
@@ -244,21 +330,21 @@ async def read_url_content(url: str) -> str:
     # ── 2. PDF ─────────────────────────────────────────────────────────────────
     if url.lower().endswith(".pdf") or "application/pdf" in url:
         try:
-            async with httpx.AsyncClient(
-                follow_redirects=True, timeout=30.0, headers=BROWSER_HEADERS
-            ) as client:
-                async with client.stream("GET", url) as resp:
-                    resp.raise_for_status()
-                    chunks, total = [], 0
-                    async for chunk in resp.aiter_bytes(chunk_size=65536):
-                        total += len(chunk)
-                        if total > PDF_MAX_BYTES:
-                            return f"PDF too large (>{PDF_MAX_BYTES // 1024 // 1024} MB): {url}"
-                        chunks.append(chunk)
-                    pdf_bytes = b"".join(chunks)
+            # _safe_http_stream re-validates every redirect hop against SSRF rules.
+            # Direct follow_redirects=True would bypass _is_url_safe on redirects.
+            final_url, resp = await _safe_http_stream(url)
+            resp.raise_for_status()
+            chunks, total = [], 0
+            async with resp:
+                async for chunk in resp.aiter_bytes(chunk_size=65536):
+                    total += len(chunk)
+                    if total > PDF_MAX_BYTES:
+                        return f"PDF too large (>{PDF_MAX_BYTES // 1024 // 1024} MB): {url}"
+                    chunks.append(chunk)
+            pdf_bytes = b"".join(chunks)
             reader = PdfReader(io.BytesIO(pdf_bytes))
             pages_text = "\n\n".join(p.extract_text() or "" for p in reader.pages)
-            return f"--- PDF CONTENT: {url} ---\n\n{pages_text}"
+            return f"--- PDF CONTENT: {final_url} ---\n\n{pages_text}"
         except Exception as e:
             return f"Could not read PDF at {url}: {e}"
 
@@ -266,6 +352,9 @@ async def read_url_content(url: str) -> str:
     try:
         markdown, _ = await _scrape_with_playwright(url)
         return f"--- CONTENT: {url} ---\n\n{markdown}"
+    except asyncio.TimeoutError:
+        logger.error(f"[TAIA] Scrape timed out after {_SCRAPE_TIMEOUT_SECONDS}s: {url}")
+        return f"Error reading {url}: request timed out after {_SCRAPE_TIMEOUT_SECONDS}s."
     except Exception as e:
         logger.error(f"[TAIA] Scrape failed for {url}: {e}")
         return f"Error reading {url}: {e}"
@@ -289,6 +378,9 @@ async def take_screenshot(url: str) -> Image:
         if not screenshot_bytes:
             raise RuntimeError("No screenshot captured.")
         return Image(data=screenshot_bytes, format="png")
+    except asyncio.TimeoutError:
+        logger.error(f"[TAIA] Screenshot timed out after {_SCRAPE_TIMEOUT_SECONDS}s: {url}")
+        raise RuntimeError(f"Screenshot timed out after {_SCRAPE_TIMEOUT_SECONDS}s for {url}.")
     except Exception as e:
         logger.error(f"[TAIA] Screenshot failed for {url}: {e}")
         raise RuntimeError(f"Screenshot failed for {url}: {e}")
