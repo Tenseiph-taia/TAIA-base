@@ -181,11 +181,4 @@ async def get_order_status(order_id: int) -> str:
     except Exception as e: return f"Lookup failed: {e}"
 
 if __name__ == "__main__":
-    import concurrent.futures
-
-    async def main():
-        loop = asyncio.get_running_loop()
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=20))
-        await mcp.run(transport="sse")
-
-    asyncio.run(main())
+    mcp.run(transport="sse")

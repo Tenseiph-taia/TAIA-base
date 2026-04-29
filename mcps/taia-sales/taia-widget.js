@@ -34,6 +34,7 @@
     if (!text) return '';
     text = text.replace(/\r\n/g, '\n');
     var lines = text.split('\n'), out = [], i = 0;
+    var hasStartedContent = false;
     while (i < lines.length) {
       var line = lines[i];
       if (line.trim().indexOf('```') === 0) {
@@ -62,7 +63,14 @@
         while (i < lines.length && /^\d+\.\s/.test(lines[i])) { ol.push('<li>' + inlineFormat(lines[i].replace(/^\d+\.\s/, '')) + '</li>'); i++; }
         out.push('<ol class="md-ol">' + ol.join('') + '</ol>'); continue;
       }
-      if (line.trim() === '') { out.push('<br>'); i++; continue; }
+      if (line.trim() === '') {
+        if (hasStartedContent) {
+          out.push('<br>');
+        }
+        i++;
+        continue;
+      }
+      hasStartedContent = true;
       out.push('<span>' + inlineFormat(line) + '</span><br>'); i++;
     }
     var html = out.join('');
