@@ -85,6 +85,7 @@ services:
     environment:
       - DB_PATH=/app/data/sales_demo.db
       - PYTHONUNBUFFERED=1
+      - ANYIO_DEFAULT_THREAD_LIMITER=20
     networks:
       - default
 
@@ -99,6 +100,9 @@ services:
     environment:
       - DB_PATH=/app/data/sales_demo.db
       - PYTHONUNBUFFERED=1
+      - LIBRECHAT_URL=${LIBRECHAT_URL}
+      - AGENT_ID=${AGENT_ID}
+      - API_KEY=${API_KEY}
     ports:
       - "8001:8001"   # Admin panel calls this from the browser
     networks:
