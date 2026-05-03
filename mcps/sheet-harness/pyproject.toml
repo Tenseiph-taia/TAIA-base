@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "taia-sheet-harness"
+version = "1.0.0"
+description = "TAIA Excel test harness MCP server"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=0.4.0",
+    "openpyxl>=3.1.0",
+    "filelock>=3.13.0",
+    "pillow>=10.0.0",
+    "pydantic>=2.0.0",
+    "pytest>=9.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+taia-sheet-harness = "taia_sheet_harness.main:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

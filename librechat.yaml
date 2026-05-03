@@ -233,6 +233,8 @@ mcpSettings:
     - 'ocr:8003'
     - 'taia-browser-harness'
     - 'taia-browser-harness:8005'
+    - 'taia-sheet-harness'
+    - 'taia-sheet-harness:8006'
 #     - 'host.docker.internal'    # Docker host access (required for Docker setups)
 #     - 'localhost'               # Local development
 #     - '*.example.com'           # Wildcard subdomain
@@ -256,6 +258,11 @@ mcpServers:
   taia-browser-harness:
     type: sse
     url: "http://taia-browser-harness:8005/sse"
+    timeout: 60000
+  
+  taia-sheet-harness:
+    type: sse
+    url: "http://taia-sheet-harness:8006/sse"
     timeout: 60000
 
 #   everything:

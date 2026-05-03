@@ -173,3 +173,7 @@ CLAUDE.md
 /.openclaude
 cline_mcp_settings.json
 /mcps/browser-harness/__pycache__
+/.kilo
+/mcps/sheet-harness/__pycache__
+/mcps/sheet-harness/tests/__pycache__
+/mcps/sheet-harness/taia_sheet_harness/__pycache__
