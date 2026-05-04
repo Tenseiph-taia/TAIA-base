@@ -73,6 +73,7 @@ services:
       - "8002:8000"
     networks:
       - default
+    restart: always
 
   taia-sales-mcp:
     build:
@@ -177,6 +178,38 @@ services:
     cap_add:
       - SETGID
       - SETUID
+
+  taia-sheet-harness:
+    build:
+      context: ./mcps/sheet-harness
+      dockerfile: Dockerfile
+    container_name: taia-sheet-harness
+    restart: unless-stopped
+    ports:
+      - "8006:8006"
+      - "8007:8007"  
+    volumes:
+      - taia-workbooks:/workbooks
+      - ./uploads:/librechat-uploads:ro
+    environment:
+      PORT: "8006"
+      DOWNLOAD_PORT: "8007"
+      WORKBOOKS_DIR: "/workbooks"
+      LIBRECHAT_UPLOADS_DIR: "/librechat-uploads"
+      LOCK_TIMEOUT_SECONDS: "10"
+      MAX_WORKBOOKS: "100"
+      SHEET_HARNESS_HOST: "127.0.0.1"
+      TAIA_SERVER_HOST: "localhost"
+      MONGO_URI: "mongodb://mongodb:27017"
+      MONGO_DB: "LibreChat"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/sse', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
       
 # # LOCAL BUILD
 #   api:
@@ -301,3 +334,4 @@ volumes:
   huggingface_cache:
   sales_data:
   ocr_data:
+  taia-workbooks:
